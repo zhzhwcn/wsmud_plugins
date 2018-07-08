@@ -180,6 +180,7 @@
         "扬州城-衙门正厅":"jh fam 0 start;go west;go north;go north",
         "扬州城-矿山":"jh fam 0 start;go west;go west;go west;go west",
         "武当派-广场":"jh fam 1 start;",
+        "武当派-三清殿":"jh fam 1 start;go north",
         "武当派-后山小院": "jh fam 1 start;go west;go northup;go north;go west;go northup;go northup;go northup;go north;go north;go north;go north;go north;go north",
         "少林派-广场":"jh fam 2 start;",
         "华山派-镇岳宫":"jh fam 3 start;",
