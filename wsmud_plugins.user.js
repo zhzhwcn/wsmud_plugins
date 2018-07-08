@@ -2,6 +2,7 @@
 // @name         wsmud_plugins
 // @namespace    cqv
 // @version      0.0.2
+// @homepage     https://greasyfork.org/zh-CN/scripts/370135
 // @description  武神传说 MUD
 // @author       fjcqv
 // @match        http://game.wsmud.com/*
