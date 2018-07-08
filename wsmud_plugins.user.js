@@ -1,7 +1,9 @@
 // ==UserScript==
 // @name         wsmud_plugins
 // @namespace    cqv
-// @version      0.0.2
+// @version      0.0.4
+// @date         01/07/2018
+// @modified     07/07/2018
 // @homepage     https://greasyfork.org/zh-CN/scripts/370135
 // @description  武神传说 MUD
 // @author       fjcqv
@@ -16,8 +18,10 @@
     'use strict';
 
     var roomItemSelectIndex = -1;
-    var timer=0;
-    var cnt=0;
+    var timer = 0;
+    var cnt = 0;
+    var zb_npc;
+    var zb_place;
     var goods = {
         //扬州城-醉仙楼-店小二
         "米饭": {
@@ -166,31 +170,101 @@
             place: "扬州城-药铺"
         },
     };
-    var equip={
-        "铁镐":0,
+    var equip = {
+        "铁镐": 0,
     };
     var npcs = {
         "店小二": 0
     };
     var place = {
-        "住房":"jh fam 0 start;go west;go west;go north;go enter",
+        "住房": "jh fam 0 start;go west;go west;go north;go enter",
         "扬州城-醉仙楼": "jh fam 0 start;go north;go north;go east",
         "扬州城-杂货铺": "jh fam 0 start;go east;go south",
         "扬州城-打铁铺": "jh fam 0 start;go east;go east;go south",
         "扬州城-药铺": "jh fam 0 start;go east;go east;go north",
-        "扬州城-衙门正厅":"jh fam 0 start;go west;go north;go north",
-        "扬州城-矿山":"jh fam 0 start;go west;go west;go west;go west",
-        "武当派-广场":"jh fam 1 start;",
-        "武当派-三清殿":"jh fam 1 start;go north",
+        "扬州城-衙门正厅": "jh fam 0 start;go west;go north;go north",
+        "扬州城-矿山": "jh fam 0 start;go west;go west;go west;go west",
+        "武当派-广场": "jh fam 1 start;",
+        "武当派-三清殿": "jh fam 1 start;go north",
+        "武当派-石阶": "jh fam 1 start;go west",
+        "武当派-练功房": "jh fam 1 start;go west;go west",
+        "武当派-太子岩": "jh fam 1 start;go west;go northup",
+        "武当派-桃园小路": "jh fam 1 start;go west;go northup;go north",
+        "武当派-舍身崖": "jh fam 1 start;go west;go northup;go north;go east",
+        "武当派-南岩峰": "jh fam 1 start;go west;go northup;go north;go west",
+        "武当派-乌鸦岭": "jh fam 1 start;go west;go northup;go north;go west;go northup",
+        "武当派-五老峰": "jh fam 1 start;go west;go northup;go north;go west;go northup;go northup",
+        "武当派-虎头岩": "jh fam 1 start;go west;go northup;go north;go west;go northup;go northup;go northup",
+        "武当派-朝天宫": "jh fam 1 start;go west;go northup;go north;go west;go northup;go northup;go northup;go north",
+        "武当派-三天门": "jh fam 1 start;go west;go northup;go north;go west;go northup;go northup;go northup;go north;go north",
+        "武当派-紫金城": "jh fam 1 start;go west;go northup;go north;go west;go northup;go northup;go northup;go north;go north;go north",
+        "武当派-林间小径": "jh fam 1 start;go west;go northup;go north;go west;go northup;go northup;go northup;go north;go north;go north;go north",
         "武当派-后山小院": "jh fam 1 start;go west;go northup;go north;go west;go northup;go northup;go northup;go north;go north;go north;go north;go north;go north",
-        "少林派-广场":"jh fam 2 start;",
-        "华山派-镇岳宫":"jh fam 3 start;",
-        "华山派-客厅":"jh fam 3 start;go westup;go north;go north",
-        "峨眉派-金顶":"jh fam 4 start;",
-        "逍遥派-青草坪":"jh fam 5 start;",
-        "丐帮-树洞内部":"jh fam 6 start;",
-        "襄阳城-广场":"jh fam 7 start;",
-        "武道塔":"jh fam 8 start"
+        "少林派-广场": "jh fam 2 start;",
+        "少林派-山门殿": "jh fam 2 start;go north",
+        "少林派-东侧殿": "jh fam 2 start;go north;go east",
+        "少林派-西侧殿": "jh fam 2 start;go north;go west",
+        "少林派-天王殿": "jh fam 2 start;go north;go north",
+        "少林派-大雄宝殿": "jh fam 2 start;go north;go north;go northup",
+        "少林派-钟楼": "jh fam 2 start;go north;go north;go northeast",
+        "少林派-鼓楼": "jh fam 2 start;go north;go north;go northwest",
+        "少林派-后殿": "jh fam 2 start;go north;go north;go northwest;go northeast",
+        "少林派-练武场": "jh fam 2 start;go north;go north;go northwest;go northeast;go north",
+        "少林派-罗汉堂": "jh fam 2 start;go north;go north;go northwest;go northeast;go north;go east",
+        "少林派-般若堂": "jh fam 2 start;go north;go north;go northwest;go northeast;go north;go west",
+        "少林派-方丈楼": "jh fam 2 start;go north;go north;go northwest;go northeast;go north;go north",
+        "少林派-戒律院": "jh fam 2 start;go north;go north;go northwest;go northeast;go north;go north;go east",
+        "少林派-达摩院": "jh fam 2 start;go north;go north;go northwest;go northeast;go north;go north;go west",
+        "少林派-竹林": "jh fam 2 start;go north;go north;go northwest;go northeast;go north;go north;go north",
+        "少林派-藏经阁": "jh fam 2 start;go north;go north;go northwest;go northeast;go north;go north;go north;go west",
+        "少林派-达摩洞": "jh fam 2 start;go north;go north;go northwest;go northeast;go north;go north;go north;go north;go north",
+        "华山派-镇岳宫": "jh fam 3 start;",
+        "华山派-苍龙岭": "jh fam 3 start;go eastup",
+        "华山派-舍身崖": "jh fam 3 start;go eastup;go southup",
+        "华山派-峭壁": "jh fam 3 start;go eastup;go southup;jumpdown",
+        "华山派-山谷": "jh fam 3 start;go eastup;go southup;jumpdown;go southup",
+        "华山派-山间平地": "jh fam 3 start;go eastup;go southup;jumpdown;go southup;go south",
+        "华山派-林间小屋": "jh fam 3 start;go eastup;go southup;jumpdown;go southup;go south;go east",
+        "华山派-玉女峰": "jh fam 3 start;go westup",
+        "华山派-玉女祠": "jh fam 3 start;go westup;go west",
+        "华山派-练武场": "jh fam 3 start;go westup;go north",
+        "华山派-练功房": "jh fam 3 start;go westup;go north;go east",
+        "华山派-客厅": "jh fam 3 start;go westup;go north;go north",
+        "华山派-偏厅": "jh fam 3 start;go westup;go north;go north;go east",
+        "华山派-寝室": "jh fam 3 start;go westup;go north;go north;go north",
+        "华山派-玉女峰山路": "jh fam 3 start;go westup;go south",
+        "华山派-玉女峰小径": "jh fam 3 start;go westup;go south;go southup",
+        "华山派-思过崖": "jh fam 3 start;go westup;go south;go southup;go southup",
+        "华山派-山洞": "jh fam 3 start;go westup;go south;go southup;go southup;break bi;enter",
+        "华山派-长空栈道": "jh fam 3 start;go westup;go south;go southup;go southup;break bi;enter;go westup",
+        "华山派-落雁峰": "jh fam 3 start;go westup;go south;go southup;go southup;break bi;enter;go westup;go westup",
+        "峨眉派-金顶": "jh fam 4 start",
+        "峨眉派-庙门": "jh fam 4 start;go west",
+        "峨眉派-广场": "jh fam 4 start;go west;go south",
+        "峨眉派-走廊": "jh fam 4 start;go west;go south;go east",
+        "峨眉派-休息室": "jh fam 4 start;go west;go south;go east;go south",
+        "峨眉派-厨房": "jh fam 4 start;go west;go south;go east;go east",
+        "峨眉派-练功房": "jh fam 4 start;go west;go south;go west;go west",
+        "峨眉派-小屋": "jh fam 4 start;go west;go south;go west;go north;go north",
+        "峨眉派-清修洞": "jh fam 4 start;go west;go south;go west;go south;go south",
+        "峨眉派-大殿": "jh fam 4 start;go west;go south;to south",
+        "峨眉派-睹光台": "jh fam 4 start;go northup",
+        "峨眉派-华藏庵": "jh fam 4 start;go northup;go east",
+        "逍遥派-青草坪": "jh fam 5 start",
+        "逍遥派-林间小道": "jh fam 5 start;go east",
+        "逍遥派-练功房": "jh fam 5 start;go east;go north",
+        "逍遥派-木板路": "jh fam 5 start;go east;go south",
+        "逍遥派-工匠屋": "jh fam 5 start;go east;go south;go south",
+        "逍遥派-休息室": "jh fam 5 start;go west;go south",
+        "逍遥派-木屋": "jh fam 5 start;go north;go north",
+        "逍遥派-地下石室": "jh fam 5 start;go down",
+        "丐帮-树洞内部": "jh fam 6 start",
+        "丐帮-树洞下": "jh fam 6 start;go down",
+        "丐帮-暗道": "jh fam 6 start;go down;go east",
+        "丐帮-土地庙": "jh fam 6 start;go down;go east;go east;go east;go up",
+        "丐帮-林间小屋": "jh fam 6 start;go down;go east;go east;go east;go east;go east;go up",
+        "襄阳城-广场": "jh fam 7 start",
+        "武道塔": "jh fam 8 start"
     };
     var family = null;
 
@@ -221,13 +295,13 @@
             var altKey = event.altKey;
             // 聊天模式单独处理
             if ($(".channel-box").is(":visible")) {
-                chatModeKeyEvent(event);
+                KEY.chatModeKeyEvent(event);
                 return;
             }
             switch (event.keyCode) {
-                    //////////////////////////////
-                    //         杂项
-                    //////////////////////////////
+                //////////////////////////////
+                //         杂项
+                //////////////////////////////
                 case 27:
                     // ESC
                     KEY.dialog_close();
@@ -240,9 +314,9 @@
                     // Space
                     KEY.dialog_confirm();
                     break;
-                    //////////////////////////////
-                    //       命令栏控制
-                    //////////////////////////////
+                //////////////////////////////
+                //       命令栏控制
+                //////////////////////////////
                 case 83:
                     // S 停止
                     KEY.do_command("stopstate");
@@ -315,18 +389,18 @@
                     // T, 一键拾取
                     WG.get_all();
                     break;
-                    //////////////////////////////
-                    //         动作栏控制
-                    // 无修饰键：个人房间动作
-                    // Alt 键：个人命令动作
-                    // Crtl 键：房间人物列表动作
-                    //////////////////////////////
+                //////////////////////////////
+                //         动作栏控制
+                // 无修饰键：个人房间动作
+                // Alt 键：个人命令动作
+                // Crtl 键：房间人物列表动作
+                //////////////////////////////
                 case 49:
                     // 1
                     if (altKey) {
                         KEY.onRoomItemAction(0);
                     } else if (ctrlKey) {
-                        KEY.room_commands( 0);
+                        KEY.room_commands(0);
                     } else {
                         KEY.combat_commands(0);
 
@@ -337,7 +411,7 @@
                     if (altKey) {
                         KEY.onRoomItemAction(1);
                     } else if (ctrlKey) {
-                        KEY.room_commands( 1);
+                        KEY.room_commands(1);
                     } else {
                         KEY.combat_commands(1);
 
@@ -348,7 +422,7 @@
                     if (altKey) {
                         KEY.onRoomItemAction(2);
                     } else if (ctrlKey) {
-                        KEY.room_commands( 2);
+                        KEY.room_commands(2);
                     } else {
                         KEY.combat_commands(2);
 
@@ -359,7 +433,7 @@
                     if (altKey) {
                         KEY.onRoomItemAction(3);
                     } else if (ctrlKey) {
-                        KEY.room_commands( 3);
+                        KEY.room_commands(3);
                     } else {
                         KEY.combat_commands(3);
 
@@ -370,29 +444,29 @@
                     if (altKey) {
                         KEY.onRoomItemAction(4);
                     } else if (ctrlKey) {
-                        KEY.room_commands( 4);
+                        KEY.room_commands(4);
                     } else {
                         KEY.combat_commands(4);
 
                     }
                     return false;
-                    //////////////////////////////
-                    //       房间人物控制
-                    //////////////////////////////
+                //////////////////////////////
+                //       房间人物控制
+                //////////////////////////////
                 case 9:
                     // Tab
                     KEY.onRoomItemSelect();
                     return false;
-                    //////////////////////////////
-                    //         地图控制
-                    //////////////////////////////
+                //////////////////////////////
+                //         地图控制
+                //////////////////////////////
                 case 103:
                     // NumPad 7
                     WG.Send("go northwest");
                     KEY.onChangeRoom();
                     break;
                 case 104:
-                    // NumPad 8
+                // NumPad 8
                 case 38:
                     // Up Arrow
                     WG.Send("go north");
@@ -404,14 +478,14 @@
                     KEY.onChangeRoom();
                     break;
                 case 100:
-                    // NumPad 4
+                // NumPad 4
                 case 37:
                     // Left Arrow
                     WG.Send("go west");
                     KEY.onChangeRoom();
                     break;
                 case 102:
-                    // NumPad 6
+                // NumPad 6
                 case 39:
                     // Right Arrow
                     WG.Send("go east");
@@ -423,7 +497,7 @@
                     KEY.onChangeRoom();
                     break;
                 case 98:
-                    // NumPad 2
+                // NumPad 2
                 case 40:
                     // Down Arrow
                     WG.Send("go south");
@@ -445,7 +519,7 @@
         do_command: function (name) {
             $("span[command=" + name + "]").click();
         },
-		room_commands: function (index) {
+        room_commands: function (index) {
             $("div.combat-panel div.room-commands span:eq(" + index + ")").click();
         },
         combat_commands: function (index) {
@@ -492,9 +566,9 @@
         $(".content-message pre").html("");
     }
     function messageAppend(m) {
-        $(".content-message pre").Append(m);
+        $(".content-message pre").append(m);
     }
-    function tip(t)	{
+    function tip(t) {
         $(".WG_Tip").html(t);
     }
 
@@ -544,7 +618,7 @@
             for (var npc of lists) {
                 if (npc.lastElementChild.lastElementChild == null) {
                     npcs[npc.lastElementChild.innerText] = $(npc).attr("itemid");
-                    messageAppend(npc.lastElementChild.innerText+" 的ID:"+$(npc).attr("itemid")+"\n");
+                    messageAppend(npc.lastElementChild.innerText + " 的ID:" + $(npc).attr("itemid") + "\n");
                 }
             }
             GM_setValue("npcs", npcs);
@@ -555,12 +629,12 @@
             $("span[WG='WG']").attr("cmd", cmd).click();
         },
         go: function (p) {
-            if(WG.at(p))return;
+            if (WG.at(p)) return;
             if (place[p] != undefined) WG.Send(place[p]);
         },
-        at:function(p){
-            var w=$(".room-name").html();
-            return w.indexOf(p)==-1?false:true;
+        at: function (p) {
+            var w = $(".room-name").html();
+            return w.indexOf(p) == -1 ? false : true;
         },
         go_family: function () {
             //无门派，提取门派
@@ -582,29 +656,30 @@
                     break;
             }
         },
-        sm:function(master){
-            master=npcs[master];
-            if(master!=undefined)
-                WG.Send("task sm "+master);
+        sm: function (master) {
+            master = npcs[master];
+            if (master != undefined)
+                WG.Send("task sm " + master);
             else
                 WG.updete_npc_id();
         },
-        buy:function(good){
-            var tmp=npcs[good.sales];
-            if(tmp==undefined){
+        buy: function (good) {
+            var tmp = npcs[good.sales];
+            if (tmp == undefined) {
                 WG.updete_npc_id();
-                return false;}
-            WG.Send("list "+tmp);
-            WG.Send("buy 1 "+good.id+" from " +tmp);
+                return false;
+            }
+            WG.Send("list " + tmp);
+            WG.Send("buy 1 " + good.id + " from " + tmp);
             return true;
         },
-        eq:function(e){
-            WG.Send("eq "+equip[e]);
+        eq: function (e) {
+            WG.Send("eq " + equip[e]);
         },
-        ask:function(npc,i){
-            npc=npcs[npc];
-            if(npc!=undefined)
-                WG.Send("ask"+i+" "+npcs["扬州知府 程药发"]);
+        ask: function (npc, i) {
+            npc = npcs[npc];
+            if (npc != undefined)
+                WG.Send("ask" + i + " " + npcs["扬州知府 程药发"]);
             else
                 WG.updete_npc_id();
         },
@@ -628,18 +703,50 @@
             if (good != undefined) {
                 tip("自动购买" + item);
                 WG.go(good.place);
-                if(WG.buy(good)){
+                if (WG.buy(good)) {
                     WG.go_family();
                 }
                 return;
             }
             tip("无法自动购买" + item);
         },
-
-
         go_yamen_task: function () {
             WG.go("扬州城-衙门正厅");
-            WG.ask("扬州知府 程药发",1);
+            WG.ask("扬州知府 程药发", 1);
+
+            window.setTimeout(WG.check_yamen_task, 1000);
+        },
+        check_yamen_task: function () {
+            tip("查找任务中");
+            var task = $(".task-desc:last").text();
+            if (task.length == 0) {
+                KEY.do_command("tasks");
+                window.setTimeout(WG.check_yamen_task, 1000);
+                return;
+            }
+            try {
+                zb_npc = task.match("犯：([^%]+)，据")[1];
+                zb_place = task.match("在([^%]+)出")[1];
+                tip("追捕任务：" + zb_npc + "   地点：" + zb_place);
+                KEY.do_command("tasks");
+                WG.go(zb_place);
+                window.setTimeout(WG.check_zb_npc, 1000);
+            }
+            catch (error) {
+                console.log("查找衙门追捕失败");
+                window.setTimeout(WG.check_yamen_task, 1000);
+            }
+        },
+        check_zb_npc: function () {
+            var lists = $(".room_items .room-item");
+            for (var npc of lists) {
+                if (npc.innerText.indexOf(zb_npc) != -1) {
+                    WG.Send("kill " + $(npc).attr("itemid"));
+                    tip("找到" + zb_npc + "，自动击杀！！！");
+                    return;
+                }
+            }
+            window.setTimeout(WG.check_zb_npc, 1000);
         },
 
         kill_all: function () {
@@ -661,26 +768,23 @@
             WG.Send("sell all");
         },
         zdwk: function () {
-            var t=$(".room_items .room-item:first .item-name").text();
-            t=t.indexOf("<挖矿");
+            var t = $(".room_items .room-item:first .item-name").text();
+            t = t.indexOf("<挖矿");
 
-            if(t==-1){
+            if (t == -1) {
                 tip("当前不在挖矿状态");
-                if(timer==0)
-                {
+                if (timer == 0) {
                     WG.go("扬州城-矿山");
                     WG.eq("铁镐");
                     WG.Send("wa");
-                    timer=setInterval(WG.zdwk,1000);
+                    timer = setInterval(WG.zdwk, 1000);
                 }
             }
-            else
-            {
+            else {
                 WG.timer_close();
             }
 
-            if(WG.at("扬州城-矿山") && t==-1)
-            {
+            if (WG.at("扬州城-矿山") && t == -1) {
                 //不能挖矿，自动买铁镐
                 WG.go("扬州城-打铁铺");
                 WG.buy(goods["铁镐"]);
@@ -688,8 +792,7 @@
                 tip("自动买铁镐");
                 return;
             }
-            if(WG.at("扬州城-打铁铺") )
-            {
+            if (WG.at("扬州城-打铁铺")) {
                 var lists = $(".dialog-list > .obj-list:eq(1)");
                 var id;
                 var name;
@@ -699,9 +802,8 @@
                         a = $(a);
                         id = a.attr("obj");
                         name = $(a.children()[0]).html();
-                        if(name=="铁镐")
-                        {
-                            equip["铁镐"]=id;
+                        if (name == "铁镐") {
+                            equip["铁镐"] = id;
 
                             WG.eq("铁镐");
 
@@ -715,55 +817,53 @@
             }
 
         },
-        timer_close:function()
-        {
-            if(timer)
-            {
+        timer_close: function () {
+            if (timer) {
                 clearInterval(timer);
-                timer=0;
+                timer = 0;
             }
         },
-        wudao_auto:function()
-        {
+        wudao_auto: function () {
             //创建定时器
-            if(timer==0)
-            {
-                timer=setInterval(WG.wudao_auto,1000);
+            if (timer == 0) {
+                timer = setInterval(WG.wudao_auto, 2000);
             }
-            if(!WG.at("武道塔"))
-            {
+            if (!WG.at("武道塔")) {
                 //进入武道塔
                 WG.go("武道塔");
-                WG.ask("守门人",1);
+                WG.ask("守门人", 1);
                 WG.Send("go enter");
             }
-            else
-            {
+            else {
                 //武道塔内处理
                 tip("武道塔");
+                var w = $(".room_items .room-item:last");
+                var t = w.text();
+                if (t.indexOf("守护者") != -1) {
+                    WG.Send("kill " + w.attr("itemid"));
+                }
+                else {
+                    WG.Send("go up");
+                }
             }
         },
-        xue_auto:function()
-        {
-            var t=$(".room_items .room-item:first .item-name").text();
-            t=t.indexOf("<打坐")!=-1 || t.indexOf("<学习")!=-1 ;
+        xue_auto: function () {
+            var t = $(".room_items .room-item:first .item-name").text();
+            t = t.indexOf("<打坐") != -1 || t.indexOf("<学习") != -1;
             //创建定时器
-            if(timer==0)
-            {
-                if(t==false){
+            if (timer == 0) {
+                if (t == false) {
                     tip("当前不在打坐或学习状态");
                     return;
                 }
-                timer=setInterval(WG.xue_auto,1000);
+                timer = setInterval(WG.xue_auto, 1000);
             }
-            if(t==false)
-            {
+            if (t == false) {
                 //学习状态中止，自动去挖矿
                 WG.timer_close();
                 WG.zdwk();
             }
-            else
-            {
+            else {
                 tip("自动打坐学习中");
             }
 
@@ -776,34 +876,38 @@
     $('head').append('<link href="https://cdn.bootcss.com/jquery-contextmenu/3.0.0-beta.2/jquery.contextMenu.min.css" rel="stylesheet">');
     $.contextMenu({
         selector: '.content-message',
-        callback: function(key, options) {
+        callback: function (key, options) {
             console.log("点击了：" + key);
         },
         items: {
-            "关闭自动": {name: "关闭自动",visible: function(key, opt) {return timer!=0;},
-                     callback: function(key, opt){WG.timer_close();},},
-			"自动": {name: "自动",visible: function(key, opt) {return timer==0;},
-                     "items": {
-						"自动打坐学习": {name: "自动打坐学习",callback: function(key, opt){WG.xue_auto();},},
-						"自动武道": {name: "自动武道",callback: function(key, opt){WG.wudao_auto();},},
-						"自动副本": {name: "自动副本",callback: function(key, opt){WG.wudao_auto();},},
-					 },
-			},
-            "门派传送": {name: "门派传送",
-                     "items": {
-                         "mp0": {name: "豪宅",callback: function(key, opt){WG.go("住房");},},
-                         "mp1": {name: "武当",callback: function(key, opt){WG.go("武当派-广场");},},
-                         "mp2": {name: "少林",callback: function(key, opt){WG.go("少林派-广场");},},
-                         "mp3": {name: "华山",callback: function(key, opt){WG.go("华山派-镇岳宫");},},
-                         "mp4": {name: "峨眉",callback: function(key, opt){WG.go("峨眉派-金顶");},},
-                         "mp5": {name: "逍遥",callback: function(key, opt){WG.go("逍遥派-青草坪");},},
-                         "mp6": {name: "丐帮",callback: function(key, opt){WG.go("丐帮-树洞内部");},},
-                         "mp7": {name: "襄阳",callback: function(key, opt){WG.go("襄阳城-广场");},},
-                         "mp8": {name: "武道",callback: function(key, opt){WG.go("武道塔");},},
-                     },
-                    },
-            "更新商品": {name: "更新商品",callback: function(key, opt){WG.updete_goods_id();},},
-            "更新NPC": {name: "更新NPC",callback: function(key, opt){WG.updete_npc_id();},}
+            "关闭自动": {
+                name: "关闭自动", visible: function (key, opt) { return timer != 0; },
+                callback: function (key, opt) { WG.timer_close(); },
+            },
+            "自动": {
+                name: "自动", visible: function (key, opt) { return timer == 0; },
+                "items": {
+                    "自动打坐学习": { name: "自动打坐学习", callback: function (key, opt) { WG.xue_auto(); }, },
+                    "自动武道": { name: "自动武道", callback: function (key, opt) { WG.wudao_auto(); }, },
+                    "自动副本": { name: "自动副本", callback: function (key, opt) { WG.wudao_auto(); }, },
+                },
+            },
+            "门派传送": {
+                name: "门派传送",
+                "items": {
+                    "mp0": { name: "豪宅", callback: function (key, opt) { WG.go("住房"); }, },
+                    "mp1": { name: "武当", callback: function (key, opt) { WG.go("武当派-广场"); }, },
+                    "mp2": { name: "少林", callback: function (key, opt) { WG.go("少林派-广场"); }, },
+                    "mp3": { name: "华山", callback: function (key, opt) { WG.go("华山派-镇岳宫"); }, },
+                    "mp4": { name: "峨眉", callback: function (key, opt) { WG.go("峨眉派-金顶"); }, },
+                    "mp5": { name: "逍遥", callback: function (key, opt) { WG.go("逍遥派-青草坪"); }, },
+                    "mp6": { name: "丐帮", callback: function (key, opt) { WG.go("丐帮-树洞内部"); }, },
+                    "mp7": { name: "襄阳", callback: function (key, opt) { WG.go("襄阳城-广场"); }, },
+                    "mp8": { name: "武道", callback: function (key, opt) { WG.go("武道塔"); }, },
+                },
+            },
+            "更新商品": { name: "更新商品", callback: function (key, opt) { WG.updete_goods_id(); }, },
+            "更新NPC": { name: "更新NPC", callback: function (key, opt) { WG.updete_npc_id(); }, }
         }
     });
 
