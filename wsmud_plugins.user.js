@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         wsmud_plugins
 // @namespace    cqv
-// @version      0.0.1
+// @version      0.0.2
 // @description  武神传说 MUD
 // @author       fjcqv
 // @match        http://game.wsmud.com/*
