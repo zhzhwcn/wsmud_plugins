@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         wsmud_plugins
 // @namespace    cqv
-// @version      0.0.4
+// @version      0.0.5
 // @date         01/07/2018
-// @modified     07/07/2018
+// @modified     08/07/2018
 // @homepage     https://greasyfork.org/zh-CN/scripts/370135
 // @description  武神传说 MUD
 // @author       fjcqv
@@ -728,7 +728,7 @@
                 zb_npc = task.match("犯：([^%]+)，据")[1];
                 zb_place = task.match("在([^%]+)出")[1];
                 tip("追捕任务：" + zb_npc + "   地点：" + zb_place);
-                KEY.do_command("tasks");
+                KEY.do_command("score");
                 WG.go(zb_place);
                 window.setTimeout(WG.check_zb_npc, 1000);
             }
