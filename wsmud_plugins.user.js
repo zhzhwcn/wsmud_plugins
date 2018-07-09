@@ -728,7 +728,7 @@
                 zb_npc = task.match("犯：([^%]+)，据")[1];
                 zb_place = task.match("在([^%]+)出")[1];
                 tip("追捕任务：" + zb_npc + "   地点：" + zb_place);
-                KEY.do_command("tasks");
+                KEY.do_command("score");
                 WG.go(zb_place);
                 window.setTimeout(WG.check_zb_npc, 1000);
             }
