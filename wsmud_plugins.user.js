@@ -679,7 +679,7 @@
         ask: function (npc, i) {
             npc = npcs[npc];
             if (npc != undefined)
-                WG.Send("ask" + i + " " + npcs["扬州知府 程药发"]);
+                WG.Send("ask" + i + " " + npc);
             else
                 WG.updete_npc_id();
         },
