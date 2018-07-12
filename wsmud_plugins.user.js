@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         wsmud_plugins
 // @namespace    cqv
-// @version      0.0.5
+// @version      0.0.6
 // @date         01/07/2018
-// @modified     08/07/2018
+// @modified     11/07/2018
 // @homepage     https://greasyfork.org/zh-CN/scripts/370135
 // @description  武神传说 MUD
 // @author       fjcqv
