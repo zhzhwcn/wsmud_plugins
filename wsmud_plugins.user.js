@@ -261,6 +261,7 @@
         "丐帮-树洞内部": "jh fam 6 start",
         "丐帮-树洞下": "jh fam 6 start;go down",
         "丐帮-暗道": "jh fam 6 start;go down;go east",
+        "丐帮-破庙密室": "jh fam 6 start;go down;go east;go east;go east",
         "丐帮-土地庙": "jh fam 6 start;go down;go east;go east;go east;go up",
         "丐帮-林间小屋": "jh fam 6 start;go down;go east;go east;go east;go east;go east;go up",
         "襄阳城-广场": "jh fam 7 start",
@@ -733,7 +734,7 @@
                 window.setTimeout(WG.check_zb_npc, 1000);
             }
             catch (error) {
-                console.log("查找衙门追捕失败");
+                tip("查找衙门追捕失败");
                 window.setTimeout(WG.check_yamen_task, 1000);
             }
         },
