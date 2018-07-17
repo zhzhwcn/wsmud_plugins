@@ -627,7 +627,10 @@
 
         Send: function (cmd) {
             console.log(cmd);
-            $("span[WG='WG']").attr("cmd", cmd).click();
+            cmd=cmd.split(";");
+            for(var c of cmd){
+            $("span[WG='WG']").attr("cmd", c).click();
+            };
         },
         go: function (p) {
             if (WG.at(p)) return;
@@ -642,6 +645,7 @@
             if (family == null) {
                 family = $('.role-list .select').text().substr(0, 2);
             }
+            console.log(family);
             switch (family) {
                 case '武当':
                     WG.go("武当派-后山小院");
