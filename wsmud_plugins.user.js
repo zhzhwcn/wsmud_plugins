@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         wsmud_plugins
 // @namespace    cqv
-// @version      0.0.7
+// @version      0.0.8
 // @date         01/07/2018
 // @modified     25/07/2018
 // @homepage     https://greasyfork.org/zh-CN/scripts/370135
@@ -268,7 +268,7 @@
         "武道塔": "jh fam 8 start"
     };
     var role;
-    var family = new Array;
+    var family = null;
     var wudao_pfm = "1";
     //快捷键功能
     var KEY = {
@@ -589,6 +589,10 @@
             npcs = GM_getValue("npcs", npcs);
             equip = GM_getValue(role + "_equip", equip);
             family = GM_getValue(role + "_family", family);
+            if(family==null)
+            {
+                family=$('.role-list .select').text().substr(0, 2);
+            }
             wudao_pfm = GM_getValue(role + "_wudao_pfm", wudao_pfm);
             $(".go_family").on("click", WG.go_family);
             $(".auto_family_task").on("click", WG.auto_family_task);
