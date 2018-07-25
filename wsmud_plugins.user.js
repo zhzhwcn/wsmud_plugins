@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         wsmud_plugins
 // @namespace    cqv
-// @version      0.0.6
+// @version      0.0.7
 // @date         01/07/2018
-// @modified     11/07/2018
+// @modified     25/07/2018
 // @homepage     https://greasyfork.org/zh-CN/scripts/370135
 // @description  武神传说 MUD
 // @author       fjcqv
@@ -235,9 +235,9 @@
         "华山派-玉女峰山路": "jh fam 3 start;go westup;go south",
         "华山派-玉女峰小径": "jh fam 3 start;go westup;go south;go southup",
         "华山派-思过崖": "jh fam 3 start;go westup;go south;go southup;go southup",
-        "华山派-山洞": "jh fam 3 start;go westup;go south;go southup;go southup;break bi;enter",
-        "华山派-长空栈道": "jh fam 3 start;go westup;go south;go southup;go southup;break bi;enter;go westup",
-        "华山派-落雁峰": "jh fam 3 start;go westup;go south;go southup;go southup;break bi;enter;go westup;go westup",
+        "华山派-山洞": "jh fam 3 start;go westup;go south;go southup;go southup;break bi;go enter",
+        "华山派-长空栈道": "jh fam 3 start;go westup;go south;go southup;go southup;break bi;go enter;go westup",
+        "华山派-落雁峰": "jh fam 3 start;go westup;go south;go southup;go southup;break bi;go enter;go westup;go westup",
         "峨眉派-金顶": "jh fam 4 start",
         "峨眉派-庙门": "jh fam 4 start;go west",
         "峨眉派-广场": "jh fam 4 start;go west;go south",
@@ -247,7 +247,7 @@
         "峨眉派-练功房": "jh fam 4 start;go west;go south;go west;go west",
         "峨眉派-小屋": "jh fam 4 start;go west;go south;go west;go north;go north",
         "峨眉派-清修洞": "jh fam 4 start;go west;go south;go west;go south;go south",
-        "峨眉派-大殿": "jh fam 4 start;go west;go south;to south",
+        "峨眉派-大殿": "jh fam 4 start;go west;go south;go south",
         "峨眉派-睹光台": "jh fam 4 start;go northup",
         "峨眉派-华藏庵": "jh fam 4 start;go northup;go east",
         "逍遥派-青草坪": "jh fam 5 start",
@@ -267,8 +267,9 @@
         "襄阳城-广场": "jh fam 7 start",
         "武道塔": "jh fam 8 start"
     };
-    var family = null;
-
+    var role;
+    var family = new Array;
+    var wudao_pfm = "1";
     //快捷键功能
     var KEY = {
         init: function () {
@@ -575,15 +576,20 @@
 
     var WG = {
         init: function () {
-            $(".bottom-bar").append("<span class='item-commands' style='display:none'><span WG='WG' cmd=''></span></span>"); //命令行模块
-            var t
+            $("li[command=SelectRole]").on("click", function () { WG.login(); });
+
+        },
+        login: function () {
+            role = $('.role-list .select').text().split(/[\s\n]/).pop();
+            $(".bottom-bar").append("<span class='item-commands' style='display:none'><span WG='WG' cmd=''></span></span>"); //命令行模块            
             $(".content-message").after("<div class='' style='right:45px;bottom:2.6em;'>" + "门派任务：<span class='zdy-item go_family'>接(Q)</span>" + "<span class='zdy-item auto_family_task'>自动(W)</span>" + "<span class='zdy-item go_yamen_task'>一键追捕(E)</span><br>" + "副本：<span class='zdy-item kill_all'>击杀(R)</span>" + "<span class='zdy-item get_all'>拾取(T)</span>" + "生活：<span class='zdy-item sell_all'>清包(T)</span>" + "<span class='zdy-item zdwk'>挖矿(T)</span>" + "<span class='WG_Tip'></span>" + "</div>");
             var css = ".zdy-item{display: inline-block; border: solid 1px gray;color: gray;background-color: black;" + "text-align: center;cursor: pointer;border-radius: 0.25em;min-width: 2.5em;margin-right: 0.4em;" + "margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;}";
             GM_addStyle(css);
             goods = GM_getValue("goods", goods);
             npcs = GM_getValue("npcs", npcs);
-            equip = GM_getValue("equip", equip);
-
+            equip = GM_getValue(role + "_equip", equip);
+            family = GM_getValue(role + "_family", family);
+            wudao_pfm = GM_getValue(role + "_wudao_pfm", wudao_pfm);
             $(".go_family").on("click", WG.go_family);
             $(".auto_family_task").on("click", WG.auto_family_task);
             $(".go_yamen_task").on("click", WG.go_yamen_task);
@@ -591,12 +597,19 @@
             $(".get_all").on("click", WG.get_all);
             $(".sell_all").on("click", WG.sell_all);
             $(".zdwk").on("click", WG.zdwk);
+            messageClear();
+            var logintext = `<br><br><br><br><br>
+            <hiy>欢迎${role},插件已加载！
+            插件版本: ${GM_info.script.version}        
+            </hiy>
+            <br><br><br><br><br>`;
+            messageAppend(logintext);
         },
         updete_goods_id: function () {
             var lists = $(".dialog-list > .obj-list:first");
             var id;
             var name;
-            $(".content-message > pre").html("");
+            messageClear();
             if (lists.length) {
                 messageAppend("检测到商品清单\n");
                 for (var a of lists.children()) {
@@ -614,7 +627,7 @@
         },
         updete_npc_id: function () {
             var lists = $(".room_items .room-item");
-            $(".content-message > pre").html("");
+            messageClear();
 
             for (var npc of lists) {
                 if (npc.lastElementChild.lastElementChild == null) {
@@ -624,12 +637,19 @@
             }
             GM_setValue("npcs", npcs);
         },
-
+        sleep: function (numberMillis) {
+            var now = new Date();
+            var exitTime = now.getTime() + numberMillis;
+            while (true) {
+                now = new Date();
+                if (now.getTime() > exitTime)
+                    return;
+            }
+        },
         Send: function (cmd) {
-            console.log(cmd);
-            cmd=cmd.split(";");
-            for(var c of cmd){
-            $("span[WG='WG']").attr("cmd", c).click();
+            cmd = cmd.split(";");
+            for (var c of cmd) {
+                $("span[WG='WG']").attr("cmd", c).click();
             };
         },
         go: function (p) {
@@ -642,26 +662,40 @@
         },
         go_family: function () {
             //无门派，提取门派
-            if (family == null) {
-                family = $('.role-list .select').text().substr(0, 2);
-            }
-            console.log(family);
+
             switch (family) {
                 case '武当':
-                    WG.go("武当派-后山小院");
-                    WG.sm("邋遢真人 张三丰");
+                    WG.go("武当派-三清殿");
+                    WG.sm("武当派第二代弟子 武当首侠 宋远桥");
                     break;
                 case '华山':
                     WG.go("华山派-客厅");
                     WG.sm("华山派掌门 君子剑 岳不群");
                     break;
+                case '少林':
+                    WG.go("少林派-天王殿");
+                    WG.sm("少林寺第三十九代弟子 道觉禅师");
+                    break;
+                case '逍遥':
+                    WG.go("逍遥派-青草坪");
+                    WG.sm("聪辩老人 苏星河");
+                    break;
+                case '丐帮':
+                    WG.go("丐帮-树洞下");
+                    WG.sm("丐帮七袋弟子 左全");
+                    break;
+                case '峨眉':
+                    WG.go("峨眉派-大殿");
+                    WG.sm("峨嵋派第四代弟子 静心");
+                    break;
                 default:
-                    tip("识别门派为" + family + "，无法工作");
-                    family = $('.role-list .select').text().substr(0, 2);
+                    tip("无效门派，请右键设置");
                     break;
             }
         },
         sm: function (master) {
+            WG.sleep(100);
+            WG.updete_npc_id();
             master = npcs[master];
             if (master != undefined)
                 WG.Send("task sm " + master);
@@ -814,7 +848,7 @@
 
                         }
                     }
-                    GM_setValue("equip", equip);
+                    GM_setValue(role + "_equip", equip);
                     WG.go("扬州城-矿山");
                     WG.Send("wa");
                 }
@@ -846,11 +880,20 @@
                 var t = w.text();
                 if (t.indexOf("守护者") != -1) {
                     WG.Send("kill " + w.attr("itemid"));
+                    WG.wudao_autopfm();
                 }
                 else {
                     WG.Send("go up");
                 }
             }
+        },
+        wudao_autopfm: function () {            
+            var pfm = wudao_pfm.split(',');            
+            for (var p of pfm) {      
+                if($("div.combat-panel div.combat-commands span.pfm-item:eq("+p+") span").css("left")=="0px")
+                $("div.combat-panel div.combat-commands span.pfm-item:eq("+p+") ").click();
+            }
+
         },
         xue_auto: function () {
             var t = $(".room_items .room-item:first .item-name").text();
@@ -872,8 +915,32 @@
                 tip("自动打坐学习中");
             }
 
-        }
-
+        },
+        setting: function () {
+            messageClear();
+            var a = ` 
+            <span>门派选择： <select id="family">
+                <option value="武当">武当</option>
+                <option value="华山">华山</option>
+                <option value="少林">少林</option>
+                <option value="峨眉">峨眉</option>
+                <option value="逍遥">逍遥</option>
+                <option value="丐帮">丐帮</option>
+            </select></span>
+            <span>武道自动攻击： <input type="text" id="wudao_pfm" name="wudao_pfm" value=""></span>
+            `;
+            messageAppend(a);
+            $('#family').val(family);
+            $("#family").change(function () {
+                family = $("#family").val();
+                GM_setValue(role + "_family", family);
+            });
+            $('#wudao_pfm').val(wudao_pfm);
+            $('#wudao_pfm').focusout(function () {
+                wudao_pfm=$('#wudao_pfm').val();
+                GM_setValue(role + "_wudao_pfm", wudao_pfm);
+            });
+        },
     };
 
     KEY.init();
@@ -894,7 +961,7 @@
                 "items": {
                     "自动打坐学习": { name: "自动打坐学习", callback: function (key, opt) { WG.xue_auto(); }, },
                     "自动武道": { name: "自动武道", callback: function (key, opt) { WG.wudao_auto(); }, },
-                    "自动副本": { name: "自动副本", callback: function (key, opt) { WG.wudao_auto(); }, },
+                    // "自动副本": { name: "自动副本", callback: function (key, opt) { WG.wudao_auto(); }, },
                 },
             },
             "门派传送": {
@@ -911,8 +978,8 @@
                     "mp8": { name: "武道", callback: function (key, opt) { WG.go("武道塔"); }, },
                 },
             },
-            "更新商品": { name: "更新商品", callback: function (key, opt) { WG.updete_goods_id(); }, },
-            "更新NPC": { name: "更新NPC", callback: function (key, opt) { WG.updete_npc_id(); }, }
+            "更新ID": { name: "更新ID", callback: function (key, opt) { WG.updete_goods_id(); WG.updete_npc_id(); }, },
+            "设置": { name: "设置", callback: function (key, opt) { WG.setting(); }, }
         }
     });
 
