@@ -1053,49 +1053,51 @@
             ws.close();
         }
     };
-
-    KEY.init();
-    WG.init();
+    $(document).ready(function(){
+        KEY.init();
+        WG.init();
+        
+        WG.add_hook("state", function(data){
+            console.dir(data);
+        });
+        $('head').append('<link href="https://cdn.bootcss.com/jquery-contextmenu/3.0.0-beta.2/jquery.contextMenu.min.css" rel="stylesheet">');
+        $.contextMenu({
+            selector: '.content-message',
+            callback: function (key, options) {
+                console.log("点击了：" + key);
+            },
+            items: {
+                "关闭自动": {
+                    name: "关闭自动", visible: function (key, opt) { return timer != 0; },
+                    callback: function (key, opt) { WG.timer_close(); },
+                },
+                "自动": {
+                    name: "自动", visible: function (key, opt) { return timer == 0; },
+                    "items": {
+                        "自动打坐学习": { name: "自动打坐学习", callback: function (key, opt) { WG.xue_auto(); }, },
+                        "自动武道": { name: "自动武道", callback: function (key, opt) { WG.wudao_auto(); }, },
+                        // "自动副本": { name: "自动副本", callback: function (key, opt) { WG.wudao_auto(); }, },
+                    },
+                },
+                "门派传送": {
+                    name: "门派传送",
+                    "items": {
+                        "mp0": { name: "豪宅", callback: function (key, opt) { WG.go("住房"); }, },
+                        "mp1": { name: "武当", callback: function (key, opt) { WG.go("武当派-广场"); }, },
+                        "mp2": { name: "少林", callback: function (key, opt) { WG.go("少林派-广场"); }, },
+                        "mp3": { name: "华山", callback: function (key, opt) { WG.go("华山派-镇岳宫"); }, },
+                        "mp4": { name: "峨眉", callback: function (key, opt) { WG.go("峨眉派-金顶"); }, },
+                        "mp5": { name: "逍遥", callback: function (key, opt) { WG.go("逍遥派-青草坪"); }, },
+                        "mp6": { name: "丐帮", callback: function (key, opt) { WG.go("丐帮-树洞内部"); }, },
+                        "mp7": { name: "襄阳", callback: function (key, opt) { WG.go("襄阳城-广场"); }, },
+                        "mp8": { name: "武道", callback: function (key, opt) { WG.go("武道塔"); }, },
+                    },
+                },
+                "更新ID": { name: "更新ID", callback: function (key, opt) { WG.updete_goods_id(); WG.updete_npc_id(); }, },
+                "设置": { name: "设置", callback: function (key, opt) { WG.setting(); }, }
+            }
+        });
+    });
     
-    WG.add_hook("state", function(data){
-        console.dir(data);
-    });
-    $('head').append('<link href="https://cdn.bootcss.com/jquery-contextmenu/3.0.0-beta.2/jquery.contextMenu.min.css" rel="stylesheet">');
-    $.contextMenu({
-        selector: '.content-message',
-        callback: function (key, options) {
-            console.log("点击了：" + key);
-        },
-        items: {
-            "关闭自动": {
-                name: "关闭自动", visible: function (key, opt) { return timer != 0; },
-                callback: function (key, opt) { WG.timer_close(); },
-            },
-            "自动": {
-                name: "自动", visible: function (key, opt) { return timer == 0; },
-                "items": {
-                    "自动打坐学习": { name: "自动打坐学习", callback: function (key, opt) { WG.xue_auto(); }, },
-                    "自动武道": { name: "自动武道", callback: function (key, opt) { WG.wudao_auto(); }, },
-                    // "自动副本": { name: "自动副本", callback: function (key, opt) { WG.wudao_auto(); }, },
-                },
-            },
-            "门派传送": {
-                name: "门派传送",
-                "items": {
-                    "mp0": { name: "豪宅", callback: function (key, opt) { WG.go("住房"); }, },
-                    "mp1": { name: "武当", callback: function (key, opt) { WG.go("武当派-广场"); }, },
-                    "mp2": { name: "少林", callback: function (key, opt) { WG.go("少林派-广场"); }, },
-                    "mp3": { name: "华山", callback: function (key, opt) { WG.go("华山派-镇岳宫"); }, },
-                    "mp4": { name: "峨眉", callback: function (key, opt) { WG.go("峨眉派-金顶"); }, },
-                    "mp5": { name: "逍遥", callback: function (key, opt) { WG.go("逍遥派-青草坪"); }, },
-                    "mp6": { name: "丐帮", callback: function (key, opt) { WG.go("丐帮-树洞内部"); }, },
-                    "mp7": { name: "襄阳", callback: function (key, opt) { WG.go("襄阳城-广场"); }, },
-                    "mp8": { name: "武道", callback: function (key, opt) { WG.go("武道塔"); }, },
-                },
-            },
-            "更新ID": { name: "更新ID", callback: function (key, opt) { WG.updete_goods_id(); WG.updete_npc_id(); }, },
-            "设置": { name: "设置", callback: function (key, opt) { WG.setting(); }, }
-        }
-    });
 
 })();
