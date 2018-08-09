@@ -8,15 +8,18 @@
 // @description  武神传说 MUD
 // @author       fjcqv
 // @match        http://game.wsmud.com/*
+// @run-at       document-start
 // @require      https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js
 // @require      https://cdn.bootcss.com/jquery-contextmenu/3.0.0-beta.2/jquery.contextMenu.min.js
 // @grant        GM_addStyle
 // @grant        GM_getValue
 // @grant        GM_setValue
+// @grant        unsafeWindow
 // ==/UserScript==
 (function () {
     'use strict';
 
+    var _ws = window.WebSocket, ws, ws_on_message;
     var roomItemSelectIndex = -1;
     var timer = 0;
     var cnt = 0;
@@ -577,11 +580,10 @@
     var WG = {
         init: function () {
             $("li[command=SelectRole]").on("click", function () { WG.login(); });
-
         },
         login: function () {
             role = $('.role-list .select').text().split(/[\s\n]/).pop();
-            $(".bottom-bar").append("<span class='item-commands' style='display:none'><span WG='WG' cmd=''></span></span>"); //命令行模块            
+            $(".bottom-bar").append("<span class='item-commands' style='display:none'><span WG='WG' cmd=''></span></span>"); //命令行模块
             $(".content-message").after("<div class='' style='right:45px;bottom:2.6em;'>" + "门派任务：<span class='zdy-item go_family'>接(Q)</span>" + "<span class='zdy-item auto_family_task'>自动(W)</span>" + "<span class='zdy-item go_yamen_task'>一键追捕(E)</span><br>" + "副本：<span class='zdy-item kill_all'>击杀(R)</span>" + "<span class='zdy-item get_all'>拾取(T)</span>" + "生活：<span class='zdy-item sell_all'>清包(T)</span>" + "<span class='zdy-item zdwk'>挖矿(T)</span>" + "<span class='WG_Tip'></span>" + "</div>");
             var css = ".zdy-item{display: inline-block; border: solid 1px gray;color: gray;background-color: black;" + "text-align: center;cursor: pointer;border-radius: 0.25em;min-width: 2.5em;margin-right: 0.4em;" + "margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;}";
             GM_addStyle(css);
@@ -604,7 +606,7 @@
             messageClear();
             var logintext = `<br><br><br><br><br>
             <hiy>欢迎${role},插件已加载！
-            插件版本: ${GM_info.script.version}        
+            插件版本: ${GM_info.script.version}
             </hiy>
             <br><br><br><br><br>`;
             messageAppend(logintext);
@@ -891,9 +893,9 @@
                 }
             }
         },
-        wudao_autopfm: function () {            
-            var pfm = wudao_pfm.split(',');            
-            for (var p of pfm) {      
+        wudao_autopfm: function () {
+            var pfm = wudao_pfm.split(',');
+            for (var p of pfm) {
                 if($("div.combat-panel div.combat-commands span.pfm-item:eq("+p+") span").css("left")=="0px")
                 $("div.combat-panel div.combat-commands span.pfm-item:eq("+p+") ").click();
             }
@@ -922,7 +924,7 @@
         },
         setting: function () {
             messageClear();
-            var a = ` 
+            var a = `
             <span>门派选择： <select id="family">
                 <option value="武当">武当</option>
                 <option value="华山">华山</option>
@@ -945,10 +947,119 @@
                 GM_setValue(role + "_wudao_pfm", wudao_pfm);
             });
         },
+        hooks : [],
+        hook_index : 0,
+        add_hook : function(type, fn){
+            var hook = {
+                'index' : WG.hook_index++,
+                'type' : type,
+                'fn' : fn
+            };
+            WG.hooks.push(hook);
+            return hook.id;
+        },
+        remove_hook : function(hook_index){
+            var index;
+            for(var i = 0; i < hooks.length; i++){
+                if(hooks[i].index == hook_index){
+                    index = i;
+                    break;
+                }
+            }
+            if(index !== undefined){
+                delete hooks[index];
+            }
+        },
+        run_hook : function(type, data){
+            for(var i = 0; i < this.hooks.length; i++){
+                if(this.hooks[i] !== undefined && this.hooks[i].type == type){
+                    this.hooks[i].fn(data);
+                }
+            }
+        },
+        receive_message : function(msg){
+            ws_on_message.apply(this, arguments);
+            if (!msg || !msg.data) return;
+            var data;
+            if (msg.data[0] == '{' || msg.data[0] == '[') {
+                var func = new Function("return " + msg.data + ";");
+                data = func();
+            } else {
+                data = {type : 'text', msg : msg.data};
+            }
+            WG.run_hook(data.type, data);
+        },
+    };
+
+    unsafeWindow.WebSocket = function(uri) {
+        ws = new _ws(uri);
+    };
+    unsafeWindow.WebSocket.prototype = {
+        CONNECTING: _ws.CONNECTING,
+        OPEN: _ws.OPEN,
+        CLOSING: _ws.CLOSING,
+        CLOSED: _ws.CLOSED,
+        get url() {
+            return ws.url;
+        },
+        get protocol() {
+            return ws.protocol;
+        },
+        get readyState() {
+            return ws.readyState;
+        },
+        get bufferedAmount() {
+            return ws.bufferedAmount;
+        },
+        get extensions() {
+            return ws.extensions;
+        },
+        get binaryType() {
+            return ws.binaryType;
+        },
+        set binaryType(t) {
+            ws.binaryType = t;
+        },
+        get onopen() {
+            return ws.onopen;
+        },
+        set onopen(fn) {
+            ws.onopen = fn;
+        },
+        get onmessage() {
+            return ws.onmessage;
+        },
+        set onmessage(fn) {
+            ws_on_message = fn;
+            ws.onmessage = WG.receive_message;
+        },
+        get onclose() {
+            return ws.onclose;
+        },
+        set onclose(fn) {
+            ws.onclose = fn;
+        },
+        get onerror() {
+            return ws.onerror;
+        },
+        set onerror(fn) {
+            ws.onerror = fn;
+        },
+        send: function(text) {
+            console.log('send:' + text);
+            ws.send(text);
+        },
+        close: function() {
+            ws.close();
+        }
     };
 
     KEY.init();
     WG.init();
+    
+    WG.add_hook("state", function(data){
+        console.dir(data);
+    });
     $('head').append('<link href="https://cdn.bootcss.com/jquery-contextmenu/3.0.0-beta.2/jquery.contextMenu.min.css" rel="stylesheet">');
     $.contextMenu({
         selector: '.content-message',
