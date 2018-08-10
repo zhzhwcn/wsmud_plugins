@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         wsmud_plugins
 // @namespace    cqv
-// @version      0.0.9
+// @version      0.0.10
 // @date         01/07/2018
 // @modified     10/08/2018
 // @homepage     https://greasyfork.org/zh-CN/scripts/370135
@@ -10,7 +10,6 @@
 // @match        http://game.wsmud.com/*
 // @require      https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js
 // @require      https://cdn.bootcss.com/jquery-contextmenu/3.0.0-beta.2/jquery.contextMenu.min.js
-// @run-at       document-start
 // @grant        unsafeWindow
 // @grant        GM_addStyle
 // @grant        GM_getValue
@@ -289,8 +288,7 @@
             $("span[command=shop] span:eq(0)").html("P");
             $("span[command=stats] span:eq(0)").html("I");
             $("span[command=setting] span:eq(0)").html(",");
-            this.do_command("showtool");
-            this.do_command("showcombat");
+
             $(document).on("keydown", this.e);
 
             this.add(27, function () { KEY.dialog_close(); });
@@ -309,11 +307,14 @@
             this.add(85, function () { KEY.do_command("message"); });
             this.add(80, function () { KEY.do_command("shop"); });
             this.add(188, function () { KEY.do_command("setting"); });
+
             this.add(81, function () { WG.sm_button(); });
             this.add(87, function () { WG.go_yamen_task(); });
-           
-            this.add(82, function () { WG.kill_all(); });
-            this.add(84, function () { WG.get_all(); });
+            this.add(69, function () { WG.kill_all(); });
+            this.add(82, function () { WG.get_all(); });
+            this.add(84, function () { WG.sell_all(); });
+            this.add(89, function () { WG.zdwk(); });
+
             this.add(9, function () { KEY.onRoomItemSelect(); return false; });
 
             //方向
@@ -435,7 +436,7 @@
     };
     var WG = {
         sm_state: -1,
-        sm_item:null,
+        sm_item: null,
         init: function () {
             $("li[command=SelectRole]").on("click", function () { WG.login(); });
         },
@@ -444,15 +445,13 @@
             $(".bottom-bar").append("<span class='item-commands' style='display:none'><span WG='WG' cmd=''></span></span>"); //命令行模块  
             var html = `
             <div class='WG_log'><pre></pre></div>
-            <div>门派任务：
+            <div>
                 <span class='zdy-item sm_button'>师门(Q)</span>
                 <span class='zdy-item go_yamen_task'>追捕(W)</span>
-                <br>副本：
-                <span class='zdy-item kill_all'>击杀(R)</span>
-                <span class='zdy-item get_all'>拾取(T)</span>
-                生活：
+                <span class='zdy-item kill_all'>击杀(E))</span>
+                <span class='zdy-item get_all'>拾取(R)</span>
                 <span class='zdy-item sell_all'>清包(T)</span>
-                <span class='zdy-item zdwk'>挖矿(T)</span>
+                <span class='zdy-item zdwk'>挖矿(Y)</span>
                 </div>
             ` ;
             $(".content-message").after(html);
@@ -484,6 +483,8 @@
                 插件版本: ${GM_info.script.version}        
                 </hiy>`;
                 messageAppend(logintext);
+                KEY.do_command("showtool");
+                KEY.do_command("showcombat");
             }, 1000);
         },
         updete_goods_id: function () {
@@ -496,13 +497,14 @@
                     a = $(a);
                     id = a.attr("obj");
                     name = $(a.children()[0]).html();
-                    console.log(name + ":" + id);
                     goods[name].id = id;
                     messageAppend(name + ":" + id);
                 }
                 GM_setValue("goods", goods);
+                return true;
             } else {
                 messageAppend("未检测到商品清单");
+                return false;
             }
         },
         updete_npc_id: function () {
@@ -515,6 +517,49 @@
                 }
             }
             GM_setValue("npcs", npcs);
+        },
+        updete_id_all: function () {
+            var t = [];
+            Object.keys(goods).forEach(function (key) {
+                if (t[goods[key].place] == undefined)
+                    t[goods[key].place] = goods[key].sales;
+            });
+
+            var keys = Object.keys(t);
+            var i = 0;
+            var state = 0;
+            var place, sales;
+            //获取
+            var timer = setInterval(() => {
+                switch (state) {
+                    case 0:
+                        if (i >= keys.length) {
+                            messageAppend("初始化完成");
+                            WG.go("武当派-广场");
+                            clearInterval(timer);
+                            return;
+                        }
+                        place = keys[i];
+                        sales = t[place];
+                        WG.go(place);
+                        state = 1;
+                        break;
+                    case 1:
+                        WG.updete_npc_id();
+                        var id = npcs[sales];
+                        WG.Send("list " + id);
+                        state = 2;
+                        break;
+                    case 2:
+                        if (WG.updete_goods_id()) {
+                            state = 0;
+                            i++;
+                        }
+                        else
+                            state = 1;
+                        break;
+                }
+            }, 1000);
         },
         Send: function (cmd) {
             cmd = cmd.split(";");
@@ -541,11 +586,11 @@
                 case 1:
                     //接受任务
                     var lists = $(".room_items .room-item");
-                    var id=null;
+                    var id = null;
                     for (var npc of lists) {
-                        if (npc.lastElementChild.lastElementChild == null) {                           
-                            if(npc.lastElementChild.innerText == sm_array[family].npc)
-                            id=$(npc).attr("itemid");                           
+                        if (npc.lastElementChild.lastElementChild == null) {
+                            if (npc.lastElementChild.innerText == sm_array[family].npc)
+                                id = $(npc).attr("itemid");
                         }
                     }
                     console.log(id);
@@ -567,7 +612,7 @@
                         setTimeout(WG.sm, 1000);
                         return;
                     };
-                    item=item.html();
+                    item = item.html();
                     //能上交直接上交
                     if ($("span[cmd$='giveup']:last").prev().children().html() == item) {
                         $("span[cmd$='giveup']:last").prev().click();
@@ -578,38 +623,35 @@
                     }
                     //不能上交自动购买
                     WG.sm_item = goods[item];
-                    if (WG.sm_item != undefined) {     
-                        WG.go(WG.sm_item.place);   
-                        messageAppend("自动购买" + item);                
+                    if (WG.sm_item != undefined) {
+                        WG.go(WG.sm_item.place);
+                        messageAppend("自动购买" + item);
                         WG.sm_state = 3;
                         setTimeout(WG.sm, 1000);
                     }
-                    else
-                    {
+                    else {
                         messageAppend("无法购买" + item);
                         WG.sm_state = -1;
                         $(".sm_button").text("师门(Q)");
-                    }                    
+                    }
                     break;
-                    case 3:
-                    WG.go(WG.sm_item.place);   
+                case 3:
+                    WG.go(WG.sm_item.place);
                     if (WG.buy(WG.sm_item)) {
                         WG.sm_state = 0;
                     }
                     setTimeout(WG.sm, 1000);
-                   break;
-                   default:break;
+                    break;
+                default: break;
             }
         },
         sm_button: function () {
-            if(WG.sm_state>=0)
-            {
-                WG.sm_state=-1;
+            if (WG.sm_state >= 0) {
+                WG.sm_state = -1;
                 $(".sm_button").text("师门(Q)");
             }
-            else
-            { 
-                WG.sm_state=0;
+            else {
+                WG.sm_state = 0;
                 $(".sm_button").text("停止(Q)");
                 setTimeout(WG.sm, 200);
 
@@ -635,7 +677,7 @@
             else
                 WG.updete_npc_id();
         },
-        
+
         go_yamen_task: function () {
             WG.go("扬州城-衙门正厅");
             WG.ask("扬州知府 程药发", 1);
@@ -814,6 +856,7 @@
                 <option value="丐帮">丐帮</option>
             </select></span>
             <span>武道自动攻击： <input type="text" id="wudao_pfm" name="wudao_pfm" value=""></span>
+            <div class="item-commands"><span class="updete_id_all">初始化ID</span></div>
             `;
             messageAppend(a);
             $('#family').val(family);
@@ -826,6 +869,7 @@
                 wudao_pfm = $('#wudao_pfm').val();
                 GM_setValue(role + "_wudao_pfm", wudao_pfm);
             });
+            $(".updete_id_all").on("click", WG.updete_id_all);
         },
     };
     $(document).ready(function () {
