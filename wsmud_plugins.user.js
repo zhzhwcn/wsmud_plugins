@@ -579,7 +579,32 @@
             var w = $(".room-name").html();
             return w.indexOf(p) == -1 ? false : true;
         },
-        sm: function () {
+        sm_hook_index : -1,
+        sm: function (buy_result = "") {
+            if(WG.sm_hook_index === -1){
+                WG.sm_hook_index = WG.add_hook("text", function(data){
+                    WG.sm(data.msg);
+                });
+            }
+            if(buy_result !== ""){
+                //还缺少钱不够的判断
+                //此处可能需要设置自动放弃之后重新接任务
+                if(buy_result === "你拿不下那么多东西。"){
+                    WG.sm_state = -1;
+                    WG.sm_button();
+                } else if(buy_result.indexOf("不出售这个东西" !== -1)){
+                    WG.sm_state = -1;
+                    WG.sm_button();
+                } else {
+                    var result = /你从店小二购买了一个<wht>(.*?)<\/wht>。/.exec(buy_result);
+                    if(result != null){
+                        WG.sm_state = 2;
+                        setTimeout(WG.sm, 1000);
+                    }
+                }
+                
+                return;
+            }
             switch (WG.sm_state) {
                 case 0:
                     //前往师门接收任务
@@ -637,6 +662,9 @@
                         messageAppend("无法购买" + item);
                         WG.sm_state = -1;
                         $(".sm_button").text("师门(Q)");
+                        if(WG.sm_hook_index !== -1){
+                            WG.remove_hook(WG.sm_hook_index);
+                        }
                     }
                     break;
                 case 3:
@@ -658,7 +686,9 @@
                 WG.sm_state = 0;
                 $(".sm_button").text("停止(Q)");
                 setTimeout(WG.sm, 200);
-
+                if(WG.sm_hook_index !== -1){
+                    WG.remove_hook(WG.sm_hook_index);
+                }
             }
         },
         buy: function (good) {
@@ -884,24 +914,25 @@
                 'fn' : fn
             };
             WG.hooks.push(hook);
-            return hook.id;
+            return hook.index;
         },
         remove_hook : function(hook_index){
             var index;
-            for(var i = 0; i < hooks.length; i++){
-                if(hooks[i].index == hook_index){
+            for(var i = 0; i < WG.hooks.length; i++){
+                if(WG.hooks[i] == undefined) continue;
+                if(WG.hooks[i].index == hook_index){
                     index = i;
                     break;
                 }
             }
             if(index !== undefined){
-                delete hooks[index];
+                delete WG.hooks[index];
             }
         },
         run_hook : function(type, data){
-            for(var i = 0; i < this.hooks.length; i++){
-                if(this.hooks[i] !== undefined && this.hooks[i].type == type){
-                    this.hooks[i].fn(data);
+            for(var i = 0; i < WG.hooks.length; i++){
+                if(WG.hooks[i] !== undefined && WG.hooks[i].type == type){
+                    WG.hooks[i].fn(data);
                 }
             }
         },
