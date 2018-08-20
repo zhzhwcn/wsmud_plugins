@@ -1013,6 +1013,7 @@
 
         },
         calc: function () {
+            messageClear();
             var html = `
                 <div>
                 <label>潜能计算器</label>
