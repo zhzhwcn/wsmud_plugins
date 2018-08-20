@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         wsmud_pluginss
 // @namespace    cqv1
-// @version      0.0.13
+// @version      0.0.12
 // @date         01/07/2018
 // @modified     10/08/2018
 // @homepage     https://greasyfork.org/zh-CN/scripts/371372
@@ -11,7 +11,6 @@
 // @run-at       document-start
 // @require      https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js
 // @require      https://cdn.bootcss.com/jquery-contextmenu/3.0.0-beta.2/jquery.contextMenu.min.js
-// @require      https://greasyfork.org/scripts/371378-layer/code/layer.js?version=622010
 // @grant        unsafeWindow
 // @grant        GM_addStyle
 // @grant        GM_getValue
@@ -20,7 +19,6 @@
 
 (function () {
     'use strict';
- 
     var _ws = window.WebSocket,
         ws, ws_on_message;
     var roomItemSelectIndex = -1;
@@ -1231,12 +1229,9 @@
         var sd = formatCurrencyTenThou(z);
         return sd;
     }
-
     $(document).ready(function () {
         $('head').append('<link href="https://cdn.bootcss.com/jquery-contextmenu/3.0.0-beta.2/jquery.contextMenu.min.css" rel="stylesheet">');
-       $('head').append('<link href="https://cdn.bootcss.com/layer/3.1.0/theme/default/layer.css" rel="stylesheet">');
-    
-        layer.alert("欢迎弟弟使用");
+       
         KEY.init();
         WG.init();
 
@@ -1254,10 +1249,10 @@
                         messageAppend("铁镐ID:" + data.items[i].id);
                     }
                 }
-                for (var i = 0; i < data.eqs.length; i++) {
-                    if (data.eqs[i].name.indexOf("铁镐") >= 0) {
-                        equip["铁镐"] = data.eqs[i].id;
-                        messageAppend("铁镐ID:" + data.eqs[i].id);
+                for (var j = 0; j < data.eqs.length; j++) {
+                    if (data.eqs[j]!=null && data.eqs[j].name.indexOf("铁镐") >= 0) {
+                        equip["铁镐"] = data.eqs[j].id;
+                        messageAppend("铁镐ID:" + data.eqs[j].id);
                     }
                 }
             }
@@ -1292,15 +1287,7 @@
                         WG.Send("stopstate");
                         WG.go(boss_place);
                     });
-                    layer.confirm('BOSS已出现,是否前往?', {
-                        btn: ['前往', '取消'] //按钮
-                    }, function () {
-                        layer.msg('gogo');
-                        WG.Send("stopstate");
-                        WG.go(boss_place);
-                    }, function () {
-                        layer.msg('不去了');
-                    });
+          
                 }
             }
 
