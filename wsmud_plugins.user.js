@@ -4,7 +4,7 @@
 // @version      0.0.11
 // @date         01/07/2018
 // @modified     10/08/2018
-// @homepage
+// @homepage     https://greasyfork.org/zh-CN/scripts/371372
 // @description  武神传说 MUD
 // @author       fjcqv(源程序) & zhzhwcn(提供websocket监听)& knva(做了一些微小的贡献)
 // @match        http://game.wsmud.com/*
