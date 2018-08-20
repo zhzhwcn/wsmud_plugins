@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         wsmud_pluginss
 // @namespace    cqv1
-// @version      0.0.12
+// @version      0.0.13
 // @date         01/07/2018
 // @modified     10/08/2018
 // @homepage     https://greasyfork.org/zh-CN/scripts/371372
@@ -11,7 +11,6 @@
 // @run-at       document-start
 // @require      https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js
 // @require      https://cdn.bootcss.com/jquery-contextmenu/3.0.0-beta.2/jquery.contextMenu.min.js
-// @require      https://cdn.bootcss.com/layer/3.1.0/layer.js
 // @grant        unsafeWindow
 // @grant        GM_addStyle
 // @grant        GM_getValue
@@ -20,6 +19,7 @@
 
 (function () {
     'use strict';
+ 
     var _ws = window.WebSocket,
         ws, ws_on_message;
     var roomItemSelectIndex = -1;
@@ -1230,10 +1230,11 @@
         var sd = formatCurrencyTenThou(z);
         return sd;
     }
+
     $(document).ready(function () {
         $('head').append('<link href="https://cdn.bootcss.com/jquery-contextmenu/3.0.0-beta.2/jquery.contextMenu.min.css" rel="stylesheet">');
-        $('head').append('<link href="https://cdn.bootcss.com/layer/3.1.0/theme/default/layer.css" rel="stylesheet">');
-        layer.alert("欢迎弟弟使用");
+      //  $('head').append('<link href="https://cdn.bootcss.com/layer/3.1.0/theme/default/layer.css" rel="stylesheet">');
+    
         KEY.init();
         WG.init();
 
@@ -1289,15 +1290,7 @@
                         WG.Send("stopstate");
                         WG.go(boss_place);
                     });
-                    layer.confirm('BOSS已出现,是否前往?', {
-                        btn: ['前往', '取消'] //按钮
-                    }, function () {
-                        layer.msg('gogo');
-                        WG.Send("stopstate");
-                        WG.go(boss_place);
-                    }, function () {
-                        layer.msg('不去了');
-                    });
+          
                 }
             }
 
