@@ -11,6 +11,7 @@
 // @run-at       document-start
 // @require      https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js
 // @require      https://cdn.bootcss.com/jquery-contextmenu/3.0.0-beta.2/jquery.contextMenu.min.js
+// @require      https://cdn.bootcss.com/layer/3.1.0/layer.js
 // @grant        unsafeWindow
 // @grant        GM_addStyle
 // @grant        GM_getValue
@@ -1229,8 +1230,13 @@
         return sd;
     }
     $(document).ready(function () {
+        $('head').append('<link href="https://cdn.bootcss.com/jquery-contextmenu/3.0.0-beta.2/jquery.contextMenu.min.css" rel="stylesheet">');
+        $('head').append('<link href="https://cdn.bootcss.com/layer/3.1.0/theme/default/layer.css" rel="stylesheet">');
+        layer.alert("欢迎弟弟使用");
         KEY.init();
         WG.init();
+
+
         WG.add_hook("state", function (data) {
             console.dir(data);
         });
@@ -1278,15 +1284,23 @@
                     var a = "<button id = 'onekeyKsboss'>传送到boss</button>"
                     messageAppend("boss已出现");
                     messageAppend(a);
-                    $('#oneKsboss').on('click',function(){
+                    $('#oneKsboss').on('click', function () {
                         WG.Send("stopstate");
-                        WG.go( boss_place );
+                        WG.go(boss_place);
+                    });
+                    layer.confirm('BOSS已出现,是否前往?', {
+                        btn: ['前往', '取消'] //按钮
+                    }, function () {
+                        layer.msg('gogo');
+                        WG.Send("stopstate");
+                        WG.go(boss_place);
+                    }, function () {
+                        layer.msg('不去了');
                     });
                 }
             }
 
         });
-        $('head').append('<link href="https://cdn.bootcss.com/jquery-contextmenu/3.0.0-beta.2/jquery.contextMenu.min.css" rel="stylesheet">');
         $.contextMenu({
             selector: '.container',
             items: {
