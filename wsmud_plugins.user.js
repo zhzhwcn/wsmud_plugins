@@ -1,13 +1,14 @@
 // ==UserScript==
-// @name         wsmud_plugins
-// @namespace    cqv
-// @version      0.0.10
+// @name         wsmud_pluginss
+// @namespace    cqv1
+// @version      0.0.11
 // @date         01/07/2018
 // @modified     10/08/2018
-// @homepage     https://greasyfork.org/zh-CN/scripts/370135
+// @homepage
 // @description  武神传说 MUD
-// @author       fjcqv
+// @author       fjcqv(源程序) & zhzhwcn(提供websocket监听)& knva(做了一些微小的贡献)
 // @match        http://game.wsmud.com/*
+// @run-at       document-start
 // @require      https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js
 // @require      https://cdn.bootcss.com/jquery-contextmenu/3.0.0-beta.2/jquery.contextMenu.min.js
 // @grant        unsafeWindow
@@ -15,9 +16,12 @@
 // @grant        GM_getValue
 // @grant        GM_setValue
 // ==/UserScript==
+
 (function () {
     'use strict';
-
+    var _ws = window.WebSocket,
+        ws, ws_on_message;
+    var roomItemSelectIndex = -1;
     var timer = 0;
     var cnt = 0;
     var zb_npc;
@@ -184,6 +188,10 @@
         "扬州城-药铺": "jh fam 0 start;go east;go east;go north",
         "扬州城-衙门正厅": "jh fam 0 start;go west;go north;go north",
         "扬州城-矿山": "jh fam 0 start;go west;go west;go west;go west",
+        "扬州城-喜宴": "jh fam 0 start;go north;go north;go east;go up",
+        "扬州城-擂台": "jh fam 0 start;go west;go south",
+        "扬州城-当铺": "jh fam 0 start;go south;go east",
+        "扬州城-帮派": "jh fam 0 start;go south;go south;go east",
         "武当派-广场": "jh fam 1 start;",
         "武当派-三清殿": "jh fam 1 start;go north",
         "武当派-石阶": "jh fam 1 start;go west",
@@ -270,6 +278,8 @@
     var role;
     var family = null;
     var wudao_pfm = "1";
+    var automarry = "已开启";
+    var autoKsBoss = "已开启"
     //快捷键功能
     var KEY = {
         keys: [],
@@ -291,67 +301,186 @@
 
             $(document).on("keydown", this.e);
 
-            this.add(27, function () { KEY.dialog_close(); });
-            this.add(192, function () { $(".map-icon").click(); });
-            this.add(32, function () { KEY.dialog_confirm(); });
-            this.add(83, function () { KEY.do_command("stopstate"); });
-            this.add(13, function () { KEY.do_command("showchat"); });
-            this.add(65, function () { KEY.do_command("showcombat"); });
-            this.add(67, function () { KEY.do_command("showtool"); });
-            this.add(66, function () { KEY.do_command("pack"); });
-            this.add(76, function () { KEY.do_command("tasks"); });
-            this.add(79, function () { KEY.do_command("score"); });
-            this.add(74, function () { KEY.do_command("jh"); });
-            this.add(75, function () { KEY.do_command("skills"); });
-            this.add(73, function () { KEY.do_command("stats"); });
-            this.add(85, function () { KEY.do_command("message"); });
-            this.add(80, function () { KEY.do_command("shop"); });
-            this.add(188, function () { KEY.do_command("setting"); });
+            this.add(27, function () {
+                KEY.dialog_close();
+            });
+            this.add(192, function () {
+                $(".map-icon").click();
+            });
+            this.add(32, function () {
+                KEY.dialog_confirm();
+            });
+            this.add(83, function () {
+                KEY.do_command("stopstate");
+            });
+            this.add(13, function () {
+                KEY.do_command("showchat");
+            });
+            this.add(65, function () {
+                KEY.do_command("showcombat");
+            });
+            this.add(67, function () {
+                KEY.do_command("showtool");
+            });
+            this.add(66, function () {
+                KEY.do_command("pack");
+            });
+            this.add(76, function () {
+                KEY.do_command("tasks");
+            });
+            this.add(79, function () {
+                KEY.do_command("score");
+            });
+            this.add(74, function () {
+                KEY.do_command("jh");
+            });
+            this.add(75, function () {
+                KEY.do_command("skills");
+            });
+            this.add(73, function () {
+                KEY.do_command("stats");
+            });
+            this.add(85, function () {
+                KEY.do_command("message");
+            });
+            this.add(80, function () {
+                KEY.do_command("shop");
+            });
+            this.add(188, function () {
+                KEY.do_command("setting");
+            });
 
-            this.add(81, function () { WG.sm_button(); });
-            this.add(87, function () { WG.go_yamen_task(); });
-            this.add(69, function () { WG.kill_all(); });
-            this.add(82, function () { WG.get_all(); });
-            this.add(84, function () { WG.sell_all(); });
-            this.add(89, function () { WG.zdwk(); });
+            this.add(81, function () {
+                WG.sm_button();
+            });
+            this.add(87, function () {
+                WG.go_yamen_task();
+            });
+            this.add(69, function () {
+                WG.kill_all();
+            });
+            this.add(82, function () {
+                WG.get_all();
+            });
+            this.add(84, function () {
+                WG.sell_all();
+            });
+            this.add(89, function () {
+                WG.zdwk();
+            });
 
-            this.add(9, function () { KEY.onRoomItemSelect(); return false; });
+            this.add(9, function () {
+                KEY.onRoomItemSelect();
+                return false;
+            });
 
             //方向
-            this.add(102, function () { WG.Send("go east"); KEY.onChangeRoom(); });
-            this.add(39, function () { WG.Send("go east"); KEY.onChangeRoom(); });
-            this.add(100, function () { WG.Send("go west"); KEY.onChangeRoom(); });
-            this.add(37, function () { WG.Send("go west"); KEY.onChangeRoom(); });
-            this.add(98, function () { WG.Send("go south"); KEY.onChangeRoom(); });
-            this.add(40, function () { WG.Send("go south"); KEY.onChangeRoom(); });
-            this.add(104, function () { WG.Send("go go north"); KEY.onChangeRoom(); });
-            this.add(38, function () { WG.Send("go go north"); KEY.onChangeRoom(); });
-            this.add(99, function () { WG.Send("go southeast"); KEY.onChangeRoom(); });
-            this.add(97, function () { WG.Send("go southwest"); KEY.onChangeRoom(); });
-            this.add(105, function () { WG.Send("go northeast"); KEY.onChangeRoom(); });
-            this.add(103, function () { WG.Send("go northwest"); KEY.onChangeRoom(); });
+            this.add(102, function () {
+                WG.Send("go east");
+                KEY.onChangeRoom();
+            });
+            this.add(39, function () {
+                WG.Send("go east");
+                KEY.onChangeRoom();
+            });
+            this.add(100, function () {
+                WG.Send("go west");
+                KEY.onChangeRoom();
+            });
+            this.add(37, function () {
+                WG.Send("go west");
+                KEY.onChangeRoom();
+            });
+            this.add(98, function () {
+                WG.Send("go south");
+                KEY.onChangeRoom();
+            });
+            this.add(40, function () {
+                WG.Send("go south");
+                KEY.onChangeRoom();
+            });
+            this.add(104, function () {
+                WG.Send("go go north");
+                KEY.onChangeRoom();
+            });
+            this.add(38, function () {
+                WG.Send("go go north");
+                KEY.onChangeRoom();
+            });
+            this.add(99, function () {
+                WG.Send("go southeast");
+                KEY.onChangeRoom();
+            });
+            this.add(97, function () {
+                WG.Send("go southwest");
+                KEY.onChangeRoom();
+            });
+            this.add(105, function () {
+                WG.Send("go northeast");
+                KEY.onChangeRoom();
+            });
+            this.add(103, function () {
+                WG.Send("go northwest");
+                KEY.onChangeRoom();
+            });
 
-            this.add(49, function () { KEY.combat_commands(0); });
-            this.add(50, function () { KEY.combat_commands(1); });
-            this.add(51, function () { KEY.combat_commands(2); });
-            this.add(52, function () { KEY.combat_commands(3); });
-            this.add(53, function () { KEY.combat_commands(4); });
-            this.add(54, function () { KEY.combat_commands(5); });
+            this.add(49, function () {
+                KEY.combat_commands(0);
+            });
+            this.add(50, function () {
+                KEY.combat_commands(1);
+            });
+            this.add(51, function () {
+                KEY.combat_commands(2);
+            });
+            this.add(52, function () {
+                KEY.combat_commands(3);
+            });
+            this.add(53, function () {
+                KEY.combat_commands(4);
+            });
+            this.add(54, function () {
+                KEY.combat_commands(5);
+            });
 
             //alt
-            this.add(49 + 512, function () { KEY.onRoomItemAction(0); });
-            this.add(50 + 512, function () { KEY.onRoomItemAction(1); });
-            this.add(51 + 512, function () { KEY.onRoomItemAction(2); });
-            this.add(52 + 512, function () { KEY.onRoomItemAction(3); });
-            this.add(53 + 512, function () { KEY.onRoomItemAction(4); });
-            this.add(54 + 512, function () { KEY.onRoomItemAction(5); });
+            this.add(49 + 512, function () {
+                KEY.onRoomItemAction(0);
+            });
+            this.add(50 + 512, function () {
+                KEY.onRoomItemAction(1);
+            });
+            this.add(51 + 512, function () {
+                KEY.onRoomItemAction(2);
+            });
+            this.add(52 + 512, function () {
+                KEY.onRoomItemAction(3);
+            });
+            this.add(53 + 512, function () {
+                KEY.onRoomItemAction(4);
+            });
+            this.add(54 + 512, function () {
+                KEY.onRoomItemAction(5);
+            });
             //ctrl
-            this.add(49 + 1024, function () { KEY.room_commands(0); });
-            this.add(50 + 1024, function () { KEY.room_commands(1); });
-            this.add(51 + 1024, function () { KEY.room_commands(2); });
-            this.add(52 + 1024, function () { KEY.room_commands(3); });
-            this.add(53 + 1024, function () { KEY.room_commands(4); });
-            this.add(54 + 1024, function () { KEY.room_commands(5); });
+            this.add(49 + 1024, function () {
+                KEY.room_commands(0);
+            });
+            this.add(50 + 1024, function () {
+                KEY.room_commands(1);
+            });
+            this.add(51 + 1024, function () {
+                KEY.room_commands(2);
+            });
+            this.add(52 + 1024, function () {
+                KEY.room_commands(3);
+            });
+            this.add(53 + 1024, function () {
+                KEY.room_commands(4);
+            });
+            this.add(54 + 1024, function () {
+                KEY.room_commands(5);
+            });
         },
         add: function (k, c) {
             var tmp = {
@@ -366,8 +495,8 @@
                 return;
             }
 
-            if ($(".dialog-confirm").is(":visible")
-                && ((event.keyCode >= 48 && event.keyCode <= 57) || (event.keyCode >= 96 && event.keyCode <= 105)))
+            if ($(".dialog-confirm").is(":visible") &&
+                ((event.keyCode >= 48 && event.keyCode <= 57) || (event.keyCode >= 96 && event.keyCode <= 105)))
                 return;
 
             var kk = (event.ctrlKey || event.metaKey ? 1024 : 0) + (event.altKey ? 512 : 0) + event.keyCode;
@@ -392,8 +521,9 @@
             $("div.combat-panel div.combat-commands span.pfm-item:eq(" + index + ")").click();
         },
         chatModeKeyEvent: function (event) {
-            if (event.keyCode == 27) { KEY.dialog_close(); }
-            else if (event.keyCode == 13) {
+            if (event.keyCode == 27) {
+                KEY.dialog_close();
+            } else if (event.keyCode == 13) {
                 if ($(".sender-box").val().length) $(".sender-btn").click();
                 else KEY.dialog_close();
             }
@@ -420,6 +550,7 @@
         $(".WG_log pre").html("");
     }
     var log_line = 0;
+
     function messageAppend(m) {
         100 < log_line && (log_line = 0, $(".WG_log pre").empty());
         $(".WG_log pre").append(m + "\n");
@@ -427,22 +558,42 @@
         $(".WG_log")[0].scrollTop = 99999;
     }
     var sm_array = {
-        '武当': { place: "武当派-三清殿", npc: "武当派第二代弟子 武当首侠 宋远桥" },
-        '华山': { place: "华山派-客厅", npc: "华山派掌门 君子剑 岳不群" },
-        '少林': { place: "少林派-天王殿", npc: "少林寺第三十九代弟子 道觉禅师" },
-        '逍遥': { place: "逍遥派-青草坪", npc: "聪辩老人 苏星河" },
-        '丐帮': { place: "丐帮-树洞下", npc: "丐帮七袋弟子 左全" },
-        '峨眉': { place: "峨眉派-大殿", npc: "峨嵋派第四代弟子 静心" },
+        '武当': {
+            place: "武当派-三清殿",
+            npc: "武当派第二代弟子 武当首侠 宋远桥"
+        },
+        '华山': {
+            place: "华山派-客厅",
+            npc: "华山派掌门 君子剑 岳不群"
+        },
+        '少林': {
+            place: "少林派-天王殿",
+            npc: "少林寺第三十九代弟子 道觉禅师"
+        },
+        '逍遥': {
+            place: "逍遥派-青草坪",
+            npc: "聪辩老人 苏星河"
+        },
+        '丐帮': {
+            place: "丐帮-树洞下",
+            npc: "丐帮七袋弟子 左全"
+        },
+        '峨眉': {
+            place: "峨眉派-大殿",
+            npc: "峨嵋派第四代弟子 静心"
+        },
     };
     var WG = {
         sm_state: -1,
         sm_item: null,
         init: function () {
-            $("li[command=SelectRole]").on("click", function () { WG.login(); });
+            $("li[command=SelectRole]").on("click", function () {
+                WG.login();
+            });
         },
         login: function () {
             role = $('.role-list .select').text().split(/[\s\n]/).pop();
-            $(".bottom-bar").append("<span class='item-commands' style='display:none'><span WG='WG' cmd=''></span></span>"); //命令行模块  
+            $(".bottom-bar").append("<span class='item-commands' style='display:none'><span WG='WG' cmd=''></span></span>"); //命令行模块
             var html = `
             <div class='WG_log'><pre></pre></div>
             <div>
@@ -453,13 +604,13 @@
                 <span class='zdy-item sell_all'>清包(T)</span>
                 <span class='zdy-item zdwk'>挖矿(Y)</span>
                 </div>
-            ` ;
+            `;
             $(".content-message").after(html);
             var css = `.zdy-item{
                 display: inline-block;border: solid 1px gray;color: gray;background-color: black;
                 text-align: center;cursor: pointer;border-radius: 0.25em;min-width: 2.5em;margin-right: 0.4em;
                 margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;line-height: 2em;}
-                .WG_log{flex: 1;overflow-y: auto;border: 1px solid #404000;max-height: 10em;width: calc(100% - 40px);}
+                .WG_log{flex: 1;overflow-y: auto;border: 1px solid #404000;max-height: 15em;width: calc(100% - 40px);}
                 .WG_log > pre{margin: 0px; white-space: pre-line;}
                 `;
             GM_addStyle(css);
@@ -467,6 +618,8 @@
             npcs = GM_getValue("npcs", npcs);
             equip = GM_getValue(role + "_equip", equip);
             family = GM_getValue(role + "_family", family);
+            automarry = GM_getValue(role + "_automarry", automarry);
+            autoKsBoss = GM_getValue(role + "_autoKsBoss", autoKsBoss);
             if (family == null) {
                 family = $('.role-list .select').text().substr(0, 2);
             }
@@ -480,10 +633,13 @@
             setTimeout(() => {
                 var logintext = `
                 <hiy>欢迎${role},插件已加载！
-                插件版本: ${GM_info.script.version}        
+                插件版本: ${GM_info.script.version}
                 </hiy>`;
                 messageAppend(logintext);
                 KEY.do_command("showtool");
+                KEY.do_command("pack");
+
+                KEY.do_command("pack");
                 KEY.do_command("showcombat");
             }, 1000);
         },
@@ -554,8 +710,7 @@
                         if (WG.updete_goods_id()) {
                             state = 0;
                             i++;
-                        }
-                        else
+                        } else
                             state = 1;
                         break;
                 }
@@ -598,8 +753,7 @@
                         WG.Send("task sm " + id);
                         WG.Send("task sm " + id);
                         WG.sm_state = 2;
-                    }
-                    else {
+                    } else {
                         WG.updete_npc_id();
                     }
                     setTimeout(WG.sm, 300);
@@ -628,8 +782,7 @@
                         messageAppend("自动购买" + item);
                         WG.sm_state = 3;
                         setTimeout(WG.sm, 1000);
-                    }
-                    else {
+                    } else {
                         messageAppend("无法购买" + item);
                         WG.sm_state = -1;
                         $(".sm_button").text("师门(Q)");
@@ -642,15 +795,15 @@
                     }
                     setTimeout(WG.sm, 1000);
                     break;
-                default: break;
+                default:
+                    break;
             }
         },
         sm_button: function () {
             if (WG.sm_state >= 0) {
                 WG.sm_state = -1;
                 $(".sm_button").text("师门(Q)");
-            }
-            else {
+            } else {
                 WG.sm_state = 0;
                 $(".sm_button").text("停止(Q)");
                 setTimeout(WG.sm, 200);
@@ -666,6 +819,16 @@
             WG.Send("list " + tmp);
             WG.Send("buy 1 " + good.id + " from " + tmp);
             return true;
+        },
+        Give: function (items) {
+            var tmp = npcs["店小二"];
+            if (tmp == undefined) {
+                WG.updete_npc_id();
+                return false;
+            }
+            WG.Send("give " + tmp + " " + items);
+            return true;
+
         },
         eq: function (e) {
             WG.Send("eq " + equip[e]);
@@ -699,8 +862,7 @@
                 KEY.do_command("score");
                 WG.go(zb_place);
                 window.setTimeout(WG.check_zb_npc, 1000);
-            }
-            catch (error) {
+            } catch (error) {
                 messageAppend("查找衙门追捕失败");
                 window.setTimeout(WG.check_yamen_task, 1000);
             }
@@ -747,8 +909,7 @@
                     WG.Send("wa");
                     timer = setInterval(WG.zdwk, 1000);
                 }
-            }
-            else {
+            } else {
                 WG.timer_close();
             }
 
@@ -801,8 +962,7 @@
                 WG.go("武道塔");
                 WG.ask("守门人", 1);
                 WG.Send("go enter");
-            }
-            else {
+            } else {
                 //武道塔内处理
                 messageAppend("武道塔");
                 var w = $(".room_items .room-item:last");
@@ -810,8 +970,7 @@
                 if (t.indexOf("守护者") != -1) {
                     WG.Send("kill " + w.attr("itemid"));
                     WG.wudao_autopfm();
-                }
-                else {
+                } else {
                     WG.Send("go up");
                 }
             }
@@ -839,15 +998,55 @@
                 //学习状态中止，自动去挖矿
                 WG.timer_close();
                 WG.zdwk();
-            }
-            else {
+            } else {
                 messageAppend("自动打坐学技能");
             }
 
         },
+        showhideborad: function () {
+            if ($('.WG_log').css('display') == 'none') {
+                $('.WG_log').show();
+            } else {
+                $('.WG_log').hide();
+            }
+
+        },
+        calc: function () {
+            var html = `
+                <div>
+                <label>潜能计算器</label>
+                    <input type="number" id="c" placeholder="初始等级" style="width:30%" class="mui-input-speech"><br/>
+                    <input type="number" id="m" placeholder="目标等级" style="width:30%"><br/>
+                    <select id="se" style="width:30%">
+                        <option value='0'>选择技能颜色</option>
+                        <option value='1' style="color: #c0c0c0;">白色</option>
+                        <option value='2' style="color:#00ff00;">绿色</option>
+                        <option value='3' style="color:#00ffff;">蓝色</option>
+                        <option value='4' style="color:#ffff00;">黄色</option>
+                        <option value='5' style="color:#912cee;">紫色</option>
+                        <option value='6' style="color: #ffa600;">橙色</option>
+                    </select><br/>
+                    <input type="button" value="计算" style="width:30%"  id="qnjs"><br/>
+               
+                    <label>开花计算器</label>
+                    <input type="number" id="nl" placeholder="当前内力" style="width:30%" class="mui-input-speech"><br/>
+                    <input type="number" id="xg" placeholder="先天根骨" style="width:30%"><br/>
+                    <input type="number" id="hg" placeholder="后天根骨" style="width:30%"><br/>
+                    <input type="button" value="计算" id = "kaihua" style="width:30%" class="mui-btn mui-btn-danger mui-btn-outlined"><br/>
+                    <label>人花分值：5000  地花分值：6500  天花分值：8000</label>
+
+                </div>`;
+            messageAppend(html);
+            $("#qnjs").on('click', function () {
+                messageAppend("需要潜能:" + dian(Number($("#c").val()), Number($("#m").val()), Number($("#se").val())));
+            });
+            $("#kaihua").on('click', function () {
+                messageAppend("你的分值:" + gen(Number($("#nl").val()), Number($("#xg").val()), Number($("#hg").val())));
+            });
+        },
         setting: function () {
-            var a = ` 
-            <span>门派选择： <select id="family">
+            var a = `
+            <span><label for="family">门派选择：</label><select id="family">
                 <option value="武当">武当</option>
                 <option value="华山">华山</option>
                 <option value="少林">少林</option>
@@ -855,7 +1054,17 @@
                 <option value="逍遥">逍遥</option>
                 <option value="丐帮">丐帮</option>
             </select></span>
-            <span>武道自动攻击： <input type="text" id="wudao_pfm" name="wudao_pfm" value=""></span>
+            <span><label for="wudao_pfm">武道自动攻击： </label><input type="text" id="wudao_pfm" name="wudao_pfm" value=""></span>
+            <span><label for="marry_kiss">自动喜宴： </label><select id = "marry_kiss">
+                <option value="已停止">已停止</option>
+                <option value="已开启">已开启</option>
+                </select>
+            </span>
+            <span><label for="ks_Boss">自动传送到boss地点： </label><select id = "ks_Boss">
+                <option value="已停止">已停止</option>
+                <option value="已开启">已开启</option>
+                </select>
+            </span>
             <div class="item-commands"><span class="updete_id_all">初始化ID</span></div>
             `;
             messageAppend(a);
@@ -869,44 +1078,377 @@
                 wudao_pfm = $('#wudao_pfm').val();
                 GM_setValue(role + "_wudao_pfm", wudao_pfm);
             });
+
+            $('#marry_kiss').val(automarry);
+            $('#marry_kiss').change(function () {
+                automarry = $('#marry_kiss').val();
+                GM_setValue(role + "_automarry", automarry);
+            });
+            $('#ks_Boss').val(autoKsBoss);
+            $('#ks_Boss').change(function () {
+                autoKsBoss = $('#ks_Boss').val();
+                GM_setValue(role + "_autoKsBoss", autoKsBoss);
+            });
             $(".updete_id_all").on("click", WG.updete_id_all);
         },
+        hooks: [],
+        hook_index: 0,
+        add_hook: function (type, fn) {
+            var hook = {
+                'index': WG.hook_index++,
+                'type': type,
+                'fn': fn
+            };
+            WG.hooks.push(hook);
+            return hook.id;
+        },
+        remove_hook: function (hook_index) {
+            var index;
+            for (var i = 0; i < hooks.length; i++) {
+                if (hooks[i].index == hook_index) {
+                    index = i;
+                    break;
+                }
+            }
+            if (index !== undefined) {
+                delete hooks[index];
+            }
+        },
+        run_hook: function (type, data) {
+            //console.log(data);
+            for (var i = 0; i < this.hooks.length; i++) {
+                if (this.hooks[i] !== undefined && this.hooks[i].type == type) {
+                    this.hooks[i].fn(data);
+                }
+            }
+        },
+        receive_message: function (msg) {
+            ws_on_message.apply(this, arguments);
+            if (!msg || !msg.data) return;
+            var data;
+            if (msg.data[0] == '{' || msg.data[0] == '[') {
+                var func = new Function("return " + msg.data + ";");
+                data = func();
+            } else {
+                data = {
+                    type: 'text',
+                    msg: msg.data
+                };
+            }
+            WG.run_hook(data.type, data);
+        },
     };
-    $(document).ready(function () {
+    unsafeWindow.WebSocket = function (uri) {
+        ws = new _ws(uri);
+    };
+    unsafeWindow.WebSocket.prototype = {
+        CONNECTING: _ws.CONNECTING,
+        OPEN: _ws.OPEN,
+        CLOSING: _ws.CLOSING,
+        CLOSED: _ws.CLOSED,
+        get url() {
+            return ws.url;
+        },
+        get protocol() {
+            return ws.protocol;
+        },
+        get readyState() {
+            return ws.readyState;
+        },
+        get bufferedAmount() {
+            return ws.bufferedAmount;
+        },
+        get extensions() {
+            return ws.extensions;
+        },
+        get binaryType() {
+            return ws.binaryType;
+        },
+        set binaryType(t) {
+            ws.binaryType = t;
+        },
+        get onopen() {
+            return ws.onopen;
+        },
+        set onopen(fn) {
+            ws.onopen = fn;
+        },
+        get onmessage() {
+            return ws.onmessage;
+        },
+        set onmessage(fn) {
+            ws_on_message = fn;
+            ws.onmessage = WG.receive_message;
+        },
+        get onclose() {
+            return ws.onclose;
+        },
+        set onclose(fn) {
+            ws.onclose = fn;
+        },
+        get onerror() {
+            return ws.onerror;
+        },
+        set onerror(fn) {
+            ws.onerror = fn;
+        },
+        send: function (text) {
 
+            ws.send(text);
+        },
+        close: function () {
+            ws.close();
+        }
+    };
+
+    function formatCurrencyTenThou(num) {　　
+        num = num.toString().replace(/\$|\,/g, '');　　
+        if (isNaN(num))　　 num = "0";　　
+        var sign = (num == (num = Math.abs(num)));　　
+        num = Math.floor(num * 10 + 0.50000000001);　　 //cents = num%10; 　　
+        num = Math.floor(num / 10).toString();　　
+        for (var i = 0; i < Math.floor((num.length - (1 + i)) / 3); i++)　 {　
+            num = num.substring(0, num.length - (4 * i + 3)) + ',' + num.substring(num.length - (4 * i + 3));　　
+        }
+        return (((sign) ? '' : '-') + num);
+    }
+
+    function gen(nl, xg, hg) {
+        var jg = nl / 100 + xg * hg / 10;
+        var sd = formatCurrencyTenThou(jg);
+        return sd;
+    }
+
+    function dian(c, m, se) {
+        var j = c + m;
+        var jj = m - c;
+        var jjc = jj / 2;
+        var z = j * jjc * se * 5;
+        var sd = formatCurrencyTenThou(z);
+        return sd;
+    }
+    $(document).ready(function () {
         KEY.init();
         WG.init();
+        WG.add_hook("state", function (data) {
+            console.dir(data);
+        });
+        WG.add_hook("dialog", function (data) {
+            //console.dir(data);
+            if (data.dialog == "pack" && data.items != undefined && data.items.length >= 0) {
+                //equip =
+                for (var i = 0; i < data.items.length; i++) {
+                    if (data.items[i].name.indexOf("铁镐") >= 0) {
+                        equip["铁镐"] = data.items[i].id;
+                        messageAppend("铁镐ID:" + data.items[i].id);
+                    }
+                }
+                for (var i = 0; i < data.eqs.length; i++) {
+                    if (data.eqs[i].name.indexOf("铁镐") >= 0) {
+                        equip["铁镐"] = data.eqs[i].id;
+                        messageAppend("铁镐ID:" + data.eqs[i].id);
+                    }
+                }
+            }
+        });
+        WG.add_hook("msg", function (data) {
+            //console.dir(data);
+            var automarry = GM_getValue(role + "_automarry", automarry);
+            if (data.content.indexOf("，婚礼将在一分钟后开始。") >= 0 && automarry == "已开启") {
+                messageAppend("自动前往婚宴地点")
+                WG.Send("stopstate");
+                WG.go("扬州城-醉仙楼");
+                WG.Send("go up");
+                WG.Give("10000 money");
+                WG.zdwk();
+            }
+            var autoKsBoss = GM_getValue(role + "_autoKsBoss", autoKsBoss);
+            if (data.content.indexOf("听说") >= 0 &&
+                data.content.indexOf("出现在") >= 0 &&
+                data.content.indexOf("一带。") >= 0
+            ) {
+
+                boss_place = data.content.match("出现在([^%]+)一带。")[1];
+                if (autoKsBoss == "已开启") {
+                    messageAppend("自动前往BOSS地点");
+                    WG.Send("stopstate");
+                    WG.go(boss_place);
+                } else if (autoKsBoss == "已停止") {
+                    var a = "<button id = 'onekeyKsboss'>传送到boss</button>"
+                    messageAppend("boss已出现");
+                    messageAppend(a);
+                    $('#oneKsboss').on('click',function(){
+                        WG.Send("stopstate");
+                        WG.go( boss_place );
+                    });
+                }
+            }
+
+        });
         $('head').append('<link href="https://cdn.bootcss.com/jquery-contextmenu/3.0.0-beta.2/jquery.contextMenu.min.css" rel="stylesheet">');
         $.contextMenu({
             selector: '.container',
             items: {
                 "关闭自动": {
-                    name: "关闭自动", visible: function (key, opt) { return timer != 0; },
-                    callback: function (key, opt) { WG.timer_close(); },
+                    name: "关闭自动",
+                    visible: function (key, opt) {
+                        return timer != 0;
+                    },
+                    callback: function (key, opt) {
+                        WG.timer_close();
+                    },
                 },
                 "自动": {
-                    name: "自动", visible: function (key, opt) { return timer == 0; },
+                    name: "自动",
+                    visible: function (key, opt) {
+                        return timer == 0;
+                    },
                     "items": {
-                        "自动打坐学习": { name: "自动打坐学习", callback: function (key, opt) { WG.xue_auto(); }, },
-                        "自动武道": { name: "自动武道", callback: function (key, opt) { WG.wudao_auto(); }, },
+                        "自动打坐学习": {
+                            name: "自动打坐学习",
+                            callback: function (key, opt) {
+                                WG.xue_auto();
+                            },
+                        },
+                        "自动武道": {
+                            name: "自动武道",
+                            callback: function (key, opt) {
+                                WG.wudao_auto();
+                            },
+                        },
+                    },
+                },
+                "手动喜宴": {
+                    name: "手动喜宴",
+                    callback: function (key, opt) {
+                        WG.go("扬州城-喜宴");
+                    },
+                },
+                "快捷传送": {
+                    name: "常用地点",
+                    "items": {
+                        "mp0": {
+                            name: "矿山",
+                            callback: function (key, opt) {
+                                WG.go("扬州城-矿山");
+                            },
+                        },
+                        "mp1": {
+                            name: "当铺",
+                            callback: function (key, opt) {
+                                WG.go("扬州城-当铺");
+                            },
+                        },
+                        "mp2": {
+                            name: "擂台",
+                            callback: function (key, opt) {
+                                WG.go("扬州城-擂台");
+                            },
+                        },
+                        "mp3": {
+                            name: "帮派",
+                            callback: function (key, opt) {
+                                WG.go("扬州城-帮派");
+                            },
+                        },
                     },
                 },
                 "门派传送": {
                     name: "门派传送",
                     "items": {
-                        "mp0": { name: "豪宅", callback: function (key, opt) { WG.go("住房"); }, },
-                        "mp1": { name: "武当", callback: function (key, opt) { WG.go("武当派-广场"); }, },
-                        "mp2": { name: "少林", callback: function (key, opt) { WG.go("少林派-广场"); }, },
-                        "mp3": { name: "华山", callback: function (key, opt) { WG.go("华山派-镇岳宫"); }, },
-                        "mp4": { name: "峨眉", callback: function (key, opt) { WG.go("峨眉派-金顶"); }, },
-                        "mp5": { name: "逍遥", callback: function (key, opt) { WG.go("逍遥派-青草坪"); }, },
-                        "mp6": { name: "丐帮", callback: function (key, opt) { WG.go("丐帮-树洞内部"); }, },
-                        "mp7": { name: "襄阳", callback: function (key, opt) { WG.go("襄阳城-广场"); }, },
-                        "mp8": { name: "武道", callback: function (key, opt) { WG.go("武道塔"); }, },
+                        "mp0": {
+                            name: "豪宅",
+                            callback: function (key, opt) {
+                                WG.go("住房");
+                            },
+                        },
+                        "mp1": {
+                            name: "武当",
+                            callback: function (key, opt) {
+                                WG.go("武当派-广场");
+                            },
+                        },
+                        "mp2": {
+                            name: "少林",
+                            callback: function (key, opt) {
+                                WG.go("少林派-广场");
+                            },
+                        },
+                        "mp3": {
+                            name: "华山",
+                            callback: function (key, opt) {
+                                WG.go("华山派-镇岳宫");
+                            },
+                        },
+                        "mp4": {
+                            name: "峨眉",
+                            callback: function (key, opt) {
+                                WG.go("峨眉派-金顶");
+                            },
+                        },
+                        "mp5": {
+                            name: "逍遥",
+                            callback: function (key, opt) {
+                                WG.go("逍遥派-青草坪");
+                            },
+                        },
+                        "mp6": {
+                            name: "丐帮",
+                            callback: function (key, opt) {
+                                WG.go("丐帮-树洞内部");
+                            },
+                        },
+                        "mp7": {
+                            name: "襄阳",
+                            callback: function (key, opt) {
+                                WG.go("襄阳城-广场");
+                            },
+                        },
+                        "mp8": {
+                            name: "武道",
+                            callback: function (key, opt) {
+                                WG.go("武道塔");
+                            },
+                        },
                     },
                 },
-                "更新ID": { name: "更新ID", callback: function (key, opt) { WG.updete_goods_id(); WG.updete_npc_id(); }, },
-                "设置": { name: "设置", callback: function (key, opt) { WG.setting(); }, }
+                "更新ID": {
+                    name: "更新ID",
+                    callback: function (key, opt) {
+                        WG.updete_goods_id();
+                        WG.updete_npc_id();
+                    },
+                },
+                "设置": {
+                    name: "设置",
+                    callback: function (key, opt) {
+                        WG.setting();
+                    },
+                },
+                "计算器": {
+                    name: "计算器",
+                    callback: function (key, opt) {
+                        WG.calc();
+                    },
+                },
+                "打开面板": {
+                    name: "打开面板",
+                    visible: function (key, opt) {
+                        return $('.WG_log').css('display') == 'none';
+                    },
+                    callback: function (key, opt) {
+                        WG.showhideborad();
+                    },
+                },
+                "关闭面板": {
+                    name: "关闭面板",
+                    visible: function (key, opt) {
+                        return $('.WG_log').css('display') != 'none';
+                    },
+                    callback: function (key, opt) {
+                        WG.showhideborad();
+                    },
+                }
             }
         });
     });
