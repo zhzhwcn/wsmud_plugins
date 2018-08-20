@@ -11,7 +11,7 @@
 // @run-at       document-start
 // @require      https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js
 // @require      https://cdn.bootcss.com/jquery-contextmenu/3.0.0-beta.2/jquery.contextMenu.min.js
-// @require      https://raw.githubusercontent.com/knva/layerfree/master/layer.js
+// @require      https://greasyfork.org/scripts/371378-layer/code/layer.js?version=622010
 // @grant        unsafeWindow
 // @grant        GM_addStyle
 // @grant        GM_getValue
