@@ -1045,6 +1045,7 @@
             });
         },
         setting: function () {
+            messageClear();
             var a = `
             <span><label for="family">门派选择：</label><select id="family">
                 <option value="武当">武当</option>
