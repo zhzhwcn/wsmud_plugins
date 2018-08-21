@@ -19,8 +19,11 @@
 
 (function () {
     'use strict';
-    var _ws = window.WebSocket,
-        ws, ws_on_message;
+    if (window.WebSocket) {
+        console.log('sup');
+        var _ws = window.WebSocket,
+            ws, ws_on_message;
+    }
     var roomItemSelectIndex = -1;
     var timer = 0;
     var cnt = 0;
@@ -278,8 +281,8 @@
     var role;
     var family = null;
     var wudao_pfm = "1";
-    var automarry = "已开启";
-    var autoKsBoss = "已开启"
+    var automarry = "已停止";
+    var autoKsBoss = "已停止"
     //快捷键功能
     var KEY = {
         keys: [],
@@ -595,24 +598,24 @@
             role = $('.role-list .select').text().split(/[\s\n]/).pop();
             $(".bottom-bar").append("<span class='item-commands' style='display:none'><span WG='WG' cmd=''></span></span>"); //命令行模块
             var html = `
-            <div class='WG_log'><pre></pre></div>
-            <div>
-                <span class='zdy-item sm_button'>师门(Q)</span>
-                <span class='zdy-item go_yamen_task'>追捕(W)</span>
-                <span class='zdy-item kill_all'>击杀(E))</span>
-                <span class='zdy-item get_all'>拾取(R)</span>
-                <span class='zdy-item sell_all'>清包(T)</span>
-                <span class='zdy-item zdwk'>挖矿(Y)</span>
-                </div>
-            `;
+<div class='WG_log'><pre></pre></div>
+<div>
+<span class='zdy-item sm_button'>师门(Q)</span>
+<span class='zdy-item go_yamen_task'>追捕(W)</span>
+<span class='zdy-item kill_all'>击杀(E))</span>
+<span class='zdy-item get_all'>拾取(R)</span>
+<span class='zdy-item sell_all'>清包(T)</span>
+<span class='zdy-item zdwk'>挖矿(Y)</span>
+</div>
+`;
             $(".content-message").after(html);
             var css = `.zdy-item{
-                display: inline-block;border: solid 1px gray;color: gray;background-color: black;
-                text-align: center;cursor: pointer;border-radius: 0.25em;min-width: 2.5em;margin-right: 0.4em;
-                margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;line-height: 2em;}
-                .WG_log{flex: 1;overflow-y: auto;border: 1px solid #404000;max-height: 15em;width: calc(100% - 40px);}
-                .WG_log > pre{margin: 0px; white-space: pre-line;}
-                `;
+display: inline-block;border: solid 1px gray;color: gray;background-color: black;
+text-align: center;cursor: pointer;border-radius: 0.25em;min-width: 2.5em;margin-right: 0.4em;
+margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;line-height: 2em;}
+.WG_log{flex: 1;overflow-y: auto;border: 1px solid #404000;max-height: 15em;width: calc(100% - 40px);}
+.WG_log > pre{margin: 0px; white-space: pre-line;}
+`;
             GM_addStyle(css);
             goods = GM_getValue("goods", goods);
             npcs = GM_getValue("npcs", npcs);
@@ -632,9 +635,9 @@
             $(".zdwk").on("click", WG.zdwk);
             setTimeout(() => {
                 var logintext = `
-                <hiy>欢迎${role},插件已加载！
-                插件版本: ${GM_info.script.version}
-                </hiy>`;
+<hiy>欢迎${role},插件已加载！第一次使用,请在设置中,初始化ID,并且设置一下是否自动婚宴,自动传送boss
+插件版本: ${GM_info.script.version}
+</hiy>`;
                 messageAppend(logintext);
                 KEY.do_command("showtool");
                 KEY.do_command("pack");
@@ -1014,29 +1017,29 @@
         calc: function () {
             messageClear();
             var html = `
-                <div>
-                <label>潜能计算器</label>
-                    <input type="number" id="c" placeholder="初始等级" style="width:30%" class="mui-input-speech"><br/>
-                    <input type="number" id="m" placeholder="目标等级" style="width:30%"><br/>
-                    <select id="se" style="width:30%">
-                        <option value='0'>选择技能颜色</option>
-                        <option value='1' style="color: #c0c0c0;">白色</option>
-                        <option value='2' style="color:#00ff00;">绿色</option>
-                        <option value='3' style="color:#00ffff;">蓝色</option>
-                        <option value='4' style="color:#ffff00;">黄色</option>
-                        <option value='5' style="color:#912cee;">紫色</option>
-                        <option value='6' style="color: #ffa600;">橙色</option>
-                    </select><br/>
-                    <input type="button" value="计算" style="width:30%"  id="qnjs"><br/>
-               
-                    <label>开花计算器</label>
-                    <input type="number" id="nl" placeholder="当前内力" style="width:30%" class="mui-input-speech"><br/>
-                    <input type="number" id="xg" placeholder="先天根骨" style="width:30%"><br/>
-                    <input type="number" id="hg" placeholder="后天根骨" style="width:30%"><br/>
-                    <input type="button" value="计算" id = "kaihua" style="width:30%" class="mui-btn mui-btn-danger mui-btn-outlined"><br/>
-                    <label>人花分值：5000  地花分值：6500  天花分值：8000</label>
+<div>
+<label>潜能计算器</label>
+<input type="number" id="c" placeholder="初始等级" style="width:30%" class="mui-input-speech"><br/>
+<input type="number" id="m" placeholder="目标等级" style="width:30%"><br/>
+<select id="se" style="width:30%">
+<option value='0'>选择技能颜色</option>
+<option value='1' style="color: #c0c0c0;">白色</option>
+<option value='2' style="color:#00ff00;">绿色</option>
+<option value='3' style="color:#00ffff;">蓝色</option>
+<option value='4' style="color:#ffff00;">黄色</option>
+<option value='5' style="color:#912cee;">紫色</option>
+<option value='6' style="color: #ffa600;">橙色</option>
+</select><br/>
+<input type="button" value="计算" style="width:30%"  id="qnjs"><br/>
 
-                </div>`;
+<label>开花计算器</label>
+<input type="number" id="nl" placeholder="当前内力" style="width:30%" class="mui-input-speech"><br/>
+<input type="number" id="xg" placeholder="先天根骨" style="width:30%"><br/>
+<input type="number" id="hg" placeholder="后天根骨" style="width:30%"><br/>
+<input type="button" value="计算" id = "kaihua" style="width:30%" class="mui-btn mui-btn-danger mui-btn-outlined"><br/>
+<label>人花分值：5000  地花分值：6500  天花分值：8000</label>
+
+</div>`;
             messageAppend(html);
             $("#qnjs").on('click', function () {
                 messageAppend("需要潜能:" + dian(Number($("#c").val()), Number($("#m").val()), Number($("#se").val())));
@@ -1048,27 +1051,27 @@
         setting: function () {
             messageClear();
             var a = `
-            <span><label for="family">门派选择：</label><select id="family">
-                <option value="武当">武当</option>
-                <option value="华山">华山</option>
-                <option value="少林">少林</option>
-                <option value="峨眉">峨眉</option>
-                <option value="逍遥">逍遥</option>
-                <option value="丐帮">丐帮</option>
-            </select></span>
-            <span><label for="wudao_pfm">武道自动攻击： </label><input type="text" id="wudao_pfm" name="wudao_pfm" value=""></span>
-            <span><label for="marry_kiss">自动喜宴： </label><select id = "marry_kiss">
-                <option value="已停止">已停止</option>
-                <option value="已开启">已开启</option>
-                </select>
-            </span>
-            <span><label for="ks_Boss">自动传送到boss地点： </label><select id = "ks_Boss">
-                <option value="已停止">已停止</option>
-                <option value="已开启">已开启</option>
-                </select>
-            </span>
-            <div class="item-commands"><span class="updete_id_all">初始化ID</span></div>
-            `;
+<span><label for="family">门派选择：</label><select id="family">
+<option value="武当">武当</option>
+<option value="华山">华山</option>
+<option value="少林">少林</option>
+<option value="峨眉">峨眉</option>
+<option value="逍遥">逍遥</option>
+<option value="丐帮">丐帮</option>
+</select></span>
+<span><label for="wudao_pfm">武道自动攻击： </label><input type="text" id="wudao_pfm" name="wudao_pfm" value=""></span>
+<span><label for="marry_kiss">自动喜宴： </label><select id = "marry_kiss">
+<option value="已停止">已停止</option>
+<option value="已开启">已开启</option>
+</select>
+</span>
+<span><label for="ks_Boss">自动传送到boss地点： </label><select id = "ks_Boss">
+<option value="已停止">已停止</option>
+<option value="已开启">已开启</option>
+</select>
+</span>
+<div class="item-commands"><span class="updete_id_all">初始化ID</span></div>
+`;
             messageAppend(a);
             $('#family').val(family);
             $("#family").change(function () {
@@ -1231,7 +1234,6 @@
     }
     $(document).ready(function () {
         $('head').append('<link href="https://cdn.bootcss.com/jquery-contextmenu/3.0.0-beta.2/jquery.contextMenu.min.css" rel="stylesheet">');
-       
         KEY.init();
         WG.init();
 
@@ -1250,7 +1252,7 @@
                     }
                 }
                 for (var j = 0; j < data.eqs.length; j++) {
-                    if (data.eqs[j]!=null && data.eqs[j].name.indexOf("铁镐") >= 0) {
+                    if (data.eqs[j] != null && data.eqs[j].name.indexOf("铁镐") >= 0) {
                         equip["铁镐"] = data.eqs[j].id;
                         messageAppend("铁镐ID:" + data.eqs[j].id);
                     }
@@ -1258,36 +1260,75 @@
             }
         });
         WG.add_hook("msg", function (data) {
-            //console.dir(data);
-            var automarry = GM_getValue(role + "_automarry", automarry);
-            if (data.content.indexOf("，婚礼将在一分钟后开始。") >= 0 && automarry == "已开启") {
-                messageAppend("自动前往婚宴地点")
-                WG.Send("stopstate");
-                WG.go("扬州城-醉仙楼");
-                WG.Send("go up");
-                WG.Give("10000 money");
-                WG.zdwk();
+            if (data.ch == "rumor") {
+                console.dir(data);
             }
+            var automarry = GM_getValue(role + "_automarry", automarry);
+            if (data.content.indexOf("，婚礼将在一分钟后开始。") >= 0) {
+                console.dir(data);
+                if (automarry == "已开启") {
+                    console.log("xiyan");
+                    messageAppend("自动前往婚宴地点")
+                    WG.Send("stopstate");
+                    WG.go("扬州城-喜宴");
+                    var h = WG.add_hook(['items', 'cmds', 'text'],function(data){
+                        if (data.type == 'items') {
+                        for(let idx =0 ; idx<data.items.length;idx++){
+                            if (data.items[idx].name == '<hio>婚宴礼桌</hio>' || data.items[idx].name == '<hiy>婚宴礼桌</hiy>') {
+								WG.remove_hook(h);
+								WG.Send('get all from ' + data.items[idx].id);
+                                WG.zdwk();
+								break;
+							}
+
+                        }}
+                        else if (data.type == 'text') {
+                            if (/^店小二拦住你说道：这位(.+)，不好意思，婚宴宾客已经太多了。$/.test(data.msg)) {
+                                WG.remove_hook(h);
+                                WG.zdwk();
+                            }
+                        } else if (data.type == 'cmds') {
+                            for (let idx = 0; idx < data.items.length; idx++) {
+                                if (data.items[idx].name == '1金贺礼' || data.items[idx].name == '9金贺礼') {
+                                    WG.Send(data.items[idx].cmd + ';go up');
+                                    break;
+                                } 
+                            }
+                        }
+                    });
+                } else if (automarry == "已开启") {
+                    var b = "<button id = 'onekeyjh'>参加喜宴</button>"
+                    messageAppend("<hiy>点击参加喜宴</hiy>");
+                    messageAppend(a);
+                    $('#onekeyjh').on('click', function () {
+                        WG.Send("stopstate");
+                        WG.go("扬州城-喜宴");
+                        WG.Give("10000 money");
+                    });
+                }
+            }
+
             var autoKsBoss = GM_getValue(role + "_autoKsBoss", autoKsBoss);
             if (data.content.indexOf("听说") >= 0 &&
                 data.content.indexOf("出现在") >= 0 &&
                 data.content.indexOf("一带。") >= 0
             ) {
-
-                boss_place = data.content.match("出现在([^%]+)一带。")[1];
+                console.dir(data);
+                console.log("boss");
+                var boss_place = data.content.match("出现在([^%]+)一带。")[1];
+                console.log(boss_place);
                 if (autoKsBoss == "已开启") {
                     messageAppend("自动前往BOSS地点");
                     WG.Send("stopstate");
                     WG.go(boss_place);
                 } else if (autoKsBoss == "已停止") {
-                    var a = "<button id = 'onekeyKsboss'>传送到boss</button>"
+                    var c = "<button id = 'onekeyKsboss'>传送到boss</button>";
                     messageAppend("boss已出现");
-                    messageAppend(a);
-                    $('#oneKsboss').on('click', function () {
+                    messageAppend(c);
+                    $('#onekeyKsboss').on('click', function () {
                         WG.Send("stopstate");
                         WG.go(boss_place);
                     });
-          
                 }
             }
 
@@ -1327,7 +1368,9 @@
                 "手动喜宴": {
                     name: "手动喜宴",
                     callback: function (key, opt) {
+                        WG.Send("stopstate");
                         WG.go("扬州城-喜宴");
+                        WG.Give("10000 money");
                     },
                 },
                 "快捷传送": {
