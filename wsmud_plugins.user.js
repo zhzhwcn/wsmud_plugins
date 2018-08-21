@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         wsmud_pluginss
 // @namespace    cqv1
-// @version      0.0.12
+// @version      0.0.13
 // @date         01/07/2018
 // @modified     10/08/2018
 // @homepage     https://greasyfork.org/zh-CN/scripts/371372
@@ -281,8 +281,8 @@
     var role;
     var family = null;
     var wudao_pfm = "1";
-    var automarry = "已停止";
-    var autoKsBoss = "已停止"
+    var automarry = null;
+    var autoKsBoss = null;
     //快捷键功能
     var KEY = {
         keys: [],
@@ -907,10 +907,11 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
             if (t == -1) {
                 messageAppend("当前不在挖矿状态");
                 if (timer == 0) {
+                    console.log(timer);
                     WG.go("扬州城-矿山");
                     WG.eq("铁镐");
                     WG.Send("wa");
-                    timer = setInterval(WG.zdwk, 1000);
+                    timer = setInterval(WG.zdwk, 2000);
                 }
             } else {
                 WG.timer_close();
@@ -1098,32 +1099,32 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
         },
         hooks: [],
         hook_index: 0,
-        add_hook: function (type, fn) {
+        add_hook: function (types, fn) {
             var hook = {
                 'index': WG.hook_index++,
-                'type': type,
+                'types': types,
                 'fn': fn
             };
             WG.hooks.push(hook);
             return hook.id;
         },
         remove_hook: function (hook_index) {
-            var index;
-            for (var i = 0; i < hooks.length; i++) {
-                if (hooks[i].index == hook_index) {
-                    index = i;
-                    break;
+            for (var i = 0; i < this.hooks.length; i++) {
+                if (this.hooks[i].id == hook_index) {
+                    this.hooks.splice(i, 1);
                 }
-            }
-            if (index !== undefined) {
-                delete hooks[index];
             }
         },
         run_hook: function (type, data) {
             //console.log(data);
             for (var i = 0; i < this.hooks.length; i++) {
-                if (this.hooks[i] !== undefined && this.hooks[i].type == type) {
-                    this.hooks[i].fn(data);
+                // if (this.hooks[i] !== undefined && this.hooks[i].type == type) {
+                //     this.hooks[i].fn(data);
+                // }
+                var listener = this.hooks[i];
+                if (listener.types == data.type || (listener.types instanceof Array && $
+                        .inArray(data.type, listener.types) >= 0)) {
+                    listener.fn(data);
                 }
             }
         },
@@ -1232,6 +1233,61 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
         var sd = formatCurrencyTenThou(z);
         return sd;
     }
+
+    function xiyan() {
+        WG.Send("stopstate");
+        WG.go("扬州城-喜宴");
+        var h = WG.add_hook(['items', 'cmds', 'text', 'msg'], function (data) {
+
+            if (data.type == 'items') {
+               
+                for (let idx = 0; idx < data.items.length; idx++) {
+                    if (data.items[idx].name == '<hio>婚宴礼桌</hio>' || data.items[idx].name == '<hiy>婚宴礼桌</hiy>') {
+                        console.log("拾取");
+                        WG.Send('get all from ' + data.items[idx].id);
+                        
+                        WG.zdwk();
+                        WG.remove_hook(h);
+ 
+                        break;
+                    } 
+                }
+            } else if (data.type == 'text') {
+                if (data.msg == "你要给谁东西？") {
+                    console.log("没人");
+                    WG.remove_hook(h);
+                    WG.zdwk();
+                }
+                if (/^店小二拦住你说道：怎么又是你，每次都跑这么快，等下再进去。$/.test(data.msg)) {
+                    console.log("cd");
+                    messageAppend("<hiy>你太勤快了, 1秒后回去挖矿</hiy>")
+                    setTimeout(() => {
+                        WG.zdwk();
+                    }, 1000);
+                    WG.remove_hook(h);
+                }
+                if (/^店小二拦住你说道：这位(.+)，不好意思，婚宴宾客已经太多了。$/.test(data.msg)) {
+                    console.log("客满");
+                    messageAppend("<hiy>你来太晚了, 1秒后回去挖矿</hiy>")
+                    setTimeout(() => {
+                        WG.zdwk();
+                    }, 1000);
+                    WG.remove_hook(h);
+           
+                }
+            } else if (data.type == 'cmds') {
+                
+                for (let idx = 0; idx < data.items.length; idx++) {
+                    if (data.items[idx].name == '1金贺礼') {
+                        WG.Send(data.items[idx].cmd + ';go up');
+                        console.log("交钱");
+                        break;
+                    }
+                }
+            }
+        });
+
+    }
     $(document).ready(function () {
         $('head').append('<link href="https://cdn.bootcss.com/jquery-contextmenu/3.0.0-beta.2/jquery.contextMenu.min.css" rel="stylesheet">');
         KEY.init();
@@ -1269,41 +1325,13 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                 if (automarry == "已开启") {
                     console.log("xiyan");
                     messageAppend("自动前往婚宴地点")
-                    WG.Send("stopstate");
-                    WG.go("扬州城-喜宴");
-                    var h = WG.add_hook(['items', 'cmds', 'text'],function(data){
-                        if (data.type == 'items') {
-                        for(let idx =0 ; idx<data.items.length;idx++){
-                            if (data.items[idx].name == '<hio>婚宴礼桌</hio>' || data.items[idx].name == '<hiy>婚宴礼桌</hiy>') {
-								WG.remove_hook(h);
-								WG.Send('get all from ' + data.items[idx].id);
-                                WG.zdwk();
-								break;
-							}
-
-                        }}
-                        else if (data.type == 'text') {
-                            if (/^店小二拦住你说道：这位(.+)，不好意思，婚宴宾客已经太多了。$/.test(data.msg)) {
-                                WG.remove_hook(h);
-                                WG.zdwk();
-                            }
-                        } else if (data.type == 'cmds') {
-                            for (let idx = 0; idx < data.items.length; idx++) {
-                                if (data.items[idx].name == '1金贺礼' || data.items[idx].name == '9金贺礼') {
-                                    WG.Send(data.items[idx].cmd + ';go up');
-                                    break;
-                                } 
-                            }
-                        }
-                    });
+                    xiyan();
                 } else if (automarry == "已开启") {
                     var b = "<button id = 'onekeyjh'>参加喜宴</button>"
                     messageAppend("<hiy>点击参加喜宴</hiy>");
                     messageAppend(a);
                     $('#onekeyjh').on('click', function () {
-                        WG.Send("stopstate");
-                        WG.go("扬州城-喜宴");
-                        WG.Give("10000 money");
+                        xiyan();
                     });
                 }
             }
@@ -1368,9 +1396,8 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                 "手动喜宴": {
                     name: "手动喜宴",
                     callback: function (key, opt) {
-                        WG.Send("stopstate");
-                        WG.go("扬州城-喜宴");
-                        WG.Give("10000 money");
+                        xiyan();
+
                     },
                 },
                 "快捷传送": {
