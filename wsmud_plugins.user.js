@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         wsmud_pluginss
 // @namespace    cqv1
-// @version      0.0.13
+// @version      0.0.14
 // @date         01/07/2018
 // @modified     10/08/2018
 // @homepage     https://greasyfork.org/zh-CN/scripts/371372
@@ -281,6 +281,7 @@
     var role;
     var family = null;
     var wudao_pfm = "1";
+    var ks_pfm = "2000";
     var automarry = null;
     var autoKsBoss = null;
     //快捷键功能
@@ -1071,6 +1072,7 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
 <option value="已开启">已开启</option>
 </select>
 </span>
+<span><label for="ks_pfm">自动叫杀延时(ms)： </label><input type="text" id="ks_pfm" name="ks_pfm" value=""></span>
 <div class="item-commands"><span class="updete_id_all">初始化ID</span></div>
 `;
             messageAppend(a);
@@ -1084,7 +1086,11 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                 wudao_pfm = $('#wudao_pfm').val();
                 GM_setValue(role + "_wudao_pfm", wudao_pfm);
             });
-
+            $('#ks_pfm').val(ks_pfm);
+            $('#ks_pfm').focusout(function () {
+                ks_pfm = $('#ks_pfm').val();
+                GM_setValue(role + "_ks_pfm", ks_pfm);
+            });
             $('#marry_kiss').val(automarry);
             $('#marry_kiss').change(function () {
                 automarry = $('#marry_kiss').val();
@@ -1240,17 +1246,17 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
         var h = WG.add_hook(['items', 'cmds', 'text', 'msg'], function (data) {
 
             if (data.type == 'items') {
-               
+
                 for (let idx = 0; idx < data.items.length; idx++) {
                     if (data.items[idx].name == '<hio>婚宴礼桌</hio>' || data.items[idx].name == '<hiy>婚宴礼桌</hiy>') {
                         console.log("拾取");
                         WG.Send('get all from ' + data.items[idx].id);
-                        
+
                         WG.zdwk();
                         WG.remove_hook(h);
- 
+
                         break;
-                    } 
+                    }
                 }
             } else if (data.type == 'text') {
                 if (data.msg == "你要给谁东西？") {
@@ -1273,10 +1279,10 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                         WG.zdwk();
                     }, 1000);
                     WG.remove_hook(h);
-           
+
                 }
             } else if (data.type == 'cmds') {
-                
+
                 for (let idx = 0; idx < data.items.length; idx++) {
                     if (data.items[idx].name == '1金贺礼') {
                         WG.Send(data.items[idx].cmd + ';go up');
@@ -1316,50 +1322,83 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
             }
         });
         WG.add_hook("msg", function (data) {
-            if (data.ch == "rumor") {
-                console.dir(data);
-            }
-            var automarry = GM_getValue(role + "_automarry", automarry);
-            if (data.content.indexOf("，婚礼将在一分钟后开始。") >= 0) {
-                console.dir(data);
-                if (automarry == "已开启") {
-                    console.log("xiyan");
-                    messageAppend("自动前往婚宴地点")
-                    xiyan();
-                } else if (automarry == "已开启") {
-                    var b = "<button id = 'onekeyjh'>参加喜宴</button>"
-                    messageAppend("<hiy>点击参加喜宴</hiy>");
-                    messageAppend(a);
-                    $('#onekeyjh').on('click', function () {
+            if (data.ch != "rumor") {
+                return;
+            } else {
+                var automarry = GM_getValue(role + "_automarry", automarry);
+                if (data.content.indexOf("，婚礼将在一分钟后开始。") >= 0) {
+                    console.dir(data);
+                    if (automarry == "已开启") {
+                        console.log("xiyan");
+                        messageAppend("自动前往婚宴地点")
                         xiyan();
-                    });
+                    } else if (automarry == "已开启") {
+                        var b = "<button id = 'onekeyjh'>参加喜宴</button>"
+                        messageAppend("<hiy>点击参加喜宴</hiy>");
+                        messageAppend(a);
+                        $('#onekeyjh').on('click', function () {
+                            xiyan();
+                        });
+                    }
                 }
-            }
 
-            var autoKsBoss = GM_getValue(role + "_autoKsBoss", autoKsBoss);
-            if (data.content.indexOf("听说") >= 0 &&
-                data.content.indexOf("出现在") >= 0 &&
-                data.content.indexOf("一带。") >= 0
-            ) {
-                console.dir(data);
-                console.log("boss");
-                var boss_place = data.content.match("出现在([^%]+)一带。")[1];
-                console.log(boss_place);
-                if (autoKsBoss == "已开启") {
-                    messageAppend("自动前往BOSS地点");
-                    WG.Send("stopstate");
-                    WG.go(boss_place);
-                } else if (autoKsBoss == "已停止") {
-                    var c = "<button id = 'onekeyKsboss'>传送到boss</button>";
-                    messageAppend("boss已出现");
-                    messageAppend(c);
-                    $('#onekeyKsboss').on('click', function () {
+                var autoKsBoss = GM_getValue(role + "_autoKsBoss", autoKsBoss);
+                var ks_pfm = GM_getValue(role + "_ks_pfm", ks_pfm);
+                if (data.content.indexOf("听说") >= 0 &&
+                    data.content.indexOf("出现在") >= 0 &&
+                    data.content.indexOf("一带。") >= 0
+                ) {
+                    console.dir(data);
+                    console.log("boss");
+                    var boss_name = data.content.match("听说([^%]+)出现在")[1];
+                    var boss_place = data.content.match("出现在([^%]+)一带。")[1];
+                    console.log(boss_place);
+                    if (autoKsBoss == "已开启") {
+                        messageAppend("自动前往BOSS地点");
                         WG.Send("stopstate");
                         WG.go(boss_place);
-                    });
+                        var ksboss = WG.add_hook(["items", "itemadd","die"], function (data) {
+                            if (data.type == "items") {
+                                for (let i = 0; i < data.items.length; i++) {
+                                    if (data.items[i] != 0) {
+                                        if (data.items[i].name.indexOf(boss_name) >= 0) {
+                                            setTimeout(() => {
+                                                WG.Send("kill " + data.items[i].id);
+                                            }, Number(ks_pfm));
+                                        }
+
+                                    }
+                                }
+                            }
+                            if(data.type =="itemadd"){
+                                if(data.name.indexOf(boss_name)>=0){
+                                    WG.get_all();
+                                    setTimeout(() => {
+                                        WG.zdwk();
+                                    }, 1000);
+                                   WG.remove_hook(ksboss);
+                                }
+                            }
+                            if(data.type =="die"){
+                                WG.Send(data.commands[0].cmd);
+                                setTimeout(() => {
+                                    WG.zdwk();
+                                }, 1000);
+                               WG.remove_hook(ksboss);
+                            }
+                            //WG.kill_all();
+                        });
+                    } else if (autoKsBoss == "已停止") {
+                        var c = "<button id = 'onekeyKsboss'>传送到boss</button>";
+                        messageAppend("boss已出现");
+                        messageAppend(c);
+                        $('#onekeyKsboss').on('click', function () {
+                            WG.Send("stopstate");
+                            WG.go(boss_place);
+                        });
+                    }
                 }
             }
-
         });
         $.contextMenu({
             selector: '.container',
