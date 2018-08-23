@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         wsmud_pluginss
 // @namespace    cqv1
-// @version      0.0.17
+// @version      0.0.19
 // @date         01/07/2018
-// @modified     10/08/2018
+// @modified     22/08/2018
 // @homepage     https://greasyfork.org/zh-CN/scripts/371372
 // @description  武神传说 MUD
 // @author       fjcqv(源程序) & zhzhwcn(提供websocket监听)& knva(做了一些微小的贡献)
@@ -418,7 +418,7 @@
                 KEY.onChangeRoom();
             });
             this.add(38, function () {
-                WG.Send("go go north");
+                WG.Send("go north");
                 KEY.onChangeRoom();
             });
             this.add(99, function () {
@@ -634,6 +634,7 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
             family = GM_getValue(role + "_family", family);
             automarry = GM_getValue(role + "_automarry", automarry);
             autoKsBoss = GM_getValue(role + "_autoKsBoss", autoKsBoss);
+            ks_pfm = GM_getValue(role + "_ks_pfm", ks_pfm);
             if (family == null) {
                 family = $('.role-list .select').text().substr(0, 2);
             }
@@ -1128,7 +1129,7 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
             console.log("remove" + hook_index);
             for (var i = 0; i < this.hooks.length; i++) {
                 if (this.hooks[i].id == hook_index) {
-                   delete this.hooks[i];
+                   this.hooks.splice(i, 1);
                 }
             }
             console.dir(this.hooks);
@@ -1267,11 +1268,15 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
 
     function kksBoss(data) {
 
+        var boss_name = data.content.match("听说([^%]+)出现在");
+        if(boss_name==null){
+            return;
+        }
+        boss_name= data.content.match("听说([^%]+)出现在")[1];
         var autoKsBoss = GM_getValue(role + "_autoKsBoss", autoKsBoss);
         var ks_pfm = GM_getValue(role + "_ks_pfm", ks_pfm);
         console.log("boss");
-        var boss_name = data.content.match("听说([^%]+)出现在")[1];
-        var boss_place = data.content.match("出现在([^%]+)一带。")[1];
+         var boss_place = data.content.match("出现在([^%]+)一带。")[1];
         console.log(boss_place);
         if (autoKsBoss == "已开启") {
             messageAppend("自动前往BOSS地点");
@@ -1292,13 +1297,16 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                                 next++;
                             }else{
                                 next = 0;
+                                if(WG.at(boss_place)){
                                 WG.get_all();
+
                                 setTimeout(() => {
                                     console.log("boss找不到溜了");
                                     WG.zdwk();
+                                }, 15000);
                                     console.log(this.index);
                                     WG.remove_hook(this.index);
-                                }, 15000);
+                                }
                             }
                         }
                     });
@@ -1311,9 +1319,9 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                         setTimeout(() => {
                             console.log("拾取");
                             WG.zdwk();
+                        }, 15000);
                             console.log(this.index);
                             WG.remove_hook(this.index);
-                        }, 15000);
                     }
                 }
                 if (data.type == "die") {
@@ -1322,9 +1330,9 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                     setTimeout(() => {
                         console.log("死了");
                         WG.zdwk();
+                    }, 15000);
                         console.log(this.index);
                         WG.remove_hook(this.index);
-                    }, 15000);
                 }
                 //WG.kill_all();
             });
@@ -1353,7 +1361,7 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
             } else if (data.type == 'text') {
                 if (data.msg == "你要给谁东西？") {
                     console.log("没人");
-                    console.log("xy" + h);
+                    console.log("xy" );
                     WG.remove_hook(h);
                     WG.zdwk();
                 }
@@ -1363,7 +1371,7 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                     setTimeout(() => {
                         WG.zdwk();
                     }, 1000);
-                    console.log("xy" + h);
+                    console.log("xy" );
                     WG.remove_hook(h);
                 }
                 if (/^店小二拦住你说道：这位(.+)，不好意思，婚宴宾客已经太多了。$/.test(data.msg)) {
@@ -1372,7 +1380,7 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                     setTimeout(() => {
                         WG.zdwk();
                     }, 1000);
-                    console.log("xy" + h);
+                    console.log("xy" );
                     WG.remove_hook(h);
 
                 }
@@ -1393,7 +1401,6 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
         $('head').append('<link href="https://cdn.bootcss.com/jquery-contextmenu/3.0.0-beta.2/jquery.contextMenu.min.css" rel="stylesheet">');
         KEY.init();
         WG.init();
-
 
         WG.add_hook("state", function (data) {
             console.dir(data);
@@ -1426,7 +1433,7 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                         messageAppend("自动前往婚宴地点")
                         xiyan();
                     } else if (automarry == "已停止") {
-                        var b = "<button id = 'onekeyjh'>参加喜宴</button>"
+                        var b = "<div class=\"item-commands\"><span  id = 'onekeyjh'>参加喜宴</span></div>"
                         messageClear();
                         messageAppend("<hiy>点击参加喜宴</hiy>");
                         messageAppend(b);
@@ -1443,7 +1450,7 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                     console.dir(data);
                     kksBoss(data);
                 } else if (autoKsBoss == "已停止") {
-                    var c = "<button id = 'onekeyKsboss'>传送到boss</button>";
+                    var c = "<div class=\"item-commands\"><span id = 'onekeyKsboss'>传送到boss</span></div>";
                     messageClear();
                     messageAppend("boss已出现");
                     messageAppend(c);
