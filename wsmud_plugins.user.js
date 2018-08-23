@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         wsmud_pluginss
 // @namespace    cqv1
-// @version      0.0.19
+// @version      0.0.20
 // @date         01/07/2018
-// @modified     22/08/2018
+// @modified     23/08/2018
 // @homepage     https://greasyfork.org/zh-CN/scripts/371372
 // @description  武神传说 MUD
 // @author       fjcqv(源程序) & zhzhwcn(提供websocket监听)& knva(做了一些微小的贡献)
@@ -19,6 +19,12 @@
 
 (function () {
     'use strict';
+    Array.prototype.baoremove = function (dx) {
+        if (isNaN(dx) || dx > this.length) {
+            return false;
+        }
+        this.splice(dx, 1);
+    }
     if (window.WebSocket) {
         console.log('sup');
         var _ws = window.WebSocket,
@@ -1055,10 +1061,10 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
 </div>`;
             messageAppend(html);
             $("#qnjs").on('click', function () {
-                messageAppend("需要潜能:" + dian(Number($("#c").val()), Number($("#m").val()), Number($("#se").val())));
+                messageAppend("需要潜能:" + Helper.dian(Number($("#c").val()), Number($("#m").val()), Number($("#se").val())));
             });
             $("#kaihua").on('click', function () {
-                messageAppend("你的分值:" + gen(Number($("#nl").val()), Number($("#xg").val()), Number($("#hg").val())));
+                messageAppend("你的分值:" + Helper.gen(Number($("#nl").val()), Number($("#xg").val()), Number($("#hg").val())));
             });
         },
         setting: function () {
@@ -1125,14 +1131,14 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
             WG.hooks.push(hook);
             return hook.id;
         },
-        remove_hook: function (hook_index) {
-            console.log("remove" + hook_index);
-            for (var i = 0; i < this.hooks.length; i++) {
-                if (this.hooks[i].id == hook_index) {
-                   this.hooks.splice(i, 1);
+        remove_hook: function (hookindex) {
+            var that = this;
+            console.log("remove_hook");
+            for (var i = 0; i < that.hooks.length; i++) {
+                if (that.hooks[i].index == hookindex) {
+                    that.hooks.baoremove(i);
                 }
             }
-            console.dir(this.hooks);
         },
         run_hook: function (type, data) {
             //console.log(data);
@@ -1226,177 +1232,173 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
         }
     };
 
-    function formatCurrencyTenThou(num) {
-        num = num.toString().replace(/\$|\,/g, '');
-        if (isNaN(num))　　 num = "0";
-        var sign = (num == (num = Math.abs(num)));
-        num = Math.floor(num * 10 + 0.50000000001);　　 //cents = num%10;
-        num = Math.floor(num / 10).toString();
-        for (var i = 0; i < Math.floor((num.length - (1 + i)) / 3); i++)　 {
-            num = num.substring(0, num.length - (4 * i + 3)) + ',' + num.substring(num.length - (4 * i + 3));
-        }
-        return (((sign) ? '' : '-') + num);
-    }
+    var Helper = {
+        formatCurrencyTenThou: function (num) {
+            num = num.toString().replace(/\$|\,/g, '');
+            if (isNaN(num))　　 num = "0";
+            var sign = (num == (num = Math.abs(num)));
+            num = Math.floor(num * 10 + 0.50000000001);　　 //cents = num%10;
+            num = Math.floor(num / 10).toString();
+            for (var i = 0; i < Math.floor((num.length - (1 + i)) / 3); i++)　 {
+                num = num.substring(0, num.length - (4 * i + 3)) + ',' + num.substring(num.length - (4 * i + 3));
+            }
+            return (((sign) ? '' : '-') + num);
+        },
 
-    function gen(nl, xg, hg) {
-        var jg = nl / 100 + xg * hg / 10;
-        var sd = formatCurrencyTenThou(jg);
-        return sd;
-    }
+        gen: function (nl, xg, hg) {
+            var jg = nl / 100 + xg * hg / 10;
+            var sd = formatCurrencyTenThou(jg);
+            return sd;
+        },
 
-    function dian(c, m, se) {
-        var j = c + m;
-        var jj = m - c;
-        var jjc = jj / 2;
-        var z = j * jjc * se * 5;
-        var sd = formatCurrencyTenThou(z);
-        return sd;
-    }
+        dian: function (c, m, se) {
+            var j = c + m;
+            var jj = m - c;
+            var jjc = jj / 2;
+            var z = j * jjc * se * 5;
+            var sd = formatCurrencyTenThou(z);
+            return sd;
+        },
 
 
-    //找boss,boss不在,-1,
-    function findboss(data, bossname, callback) {
-        for (let i = 0; i < data.items.length; i++) {
-            if (data.items[i] != 0) {
-                if (data.items[i].name.indexOf(bossname) >= 0) {
-                    callback(data.items[i].id);
+        //找boss,boss不在,-1,
+        findboss: function (data, bossname, callback) {
+            for (let i = 0; i < data.items.length; i++) {
+                if (data.items[i] != 0) {
+                    if (data.items[i].name.indexOf(bossname) >= 0) {
+                        callback(data.items[i].id);
+                    }
                 }
             }
-        }
-        callback(-1);
-    }
+            callback(-1);
+        },
 
-    function kksBoss(data) {
+        kksBoss: function (data) {
 
-        var boss_name = data.content.match("听说([^%]+)出现在");
-        if(boss_name==null){
-            return;
-        }
-        boss_name= data.content.match("听说([^%]+)出现在")[1];
-        var autoKsBoss = GM_getValue(role + "_autoKsBoss", autoKsBoss);
-        var ks_pfm = GM_getValue(role + "_ks_pfm", ks_pfm);
-        console.log("boss");
-         var boss_place = data.content.match("出现在([^%]+)一带。")[1];
-        console.log(boss_place);
-        if (autoKsBoss == "已开启") {
-            messageAppend("自动前往BOSS地点");
-            WG.Send("stopstate");
-            WG.go(boss_place);
-            var ksboss = WG.add_hook(["items", "itemadd", "die"], function (data) {
-                if (data.type == "items") {
-                    findboss(data, boss_name, function (bid) {
-                        if (bid != -1) {
-                            next = 0;
-                            setTimeout(() => {
-                                WG.Send("kill " + bid);
-                            }, Number(ks_pfm));
-                        } else {
-                            let lj = needfind[boss_place];
-                            if (needfind[boss_place] != undefined && next < lj.length) {
-                                WG.Send(lj[next]);
-                                next++;
-                            }else{
+            var boss_name = data.content.match("听说([^%]+)出现在");
+            if (boss_name == null) {
+                return;
+            }
+            setTimeout(() => {
+                console.log("挖矿");
+                WG.zdwk();
+            }, 30000);
+            boss_name = data.content.match("听说([^%]+)出现在")[1];
+            var autoKsBoss = GM_getValue(role + "_autoKsBoss", autoKsBoss);
+            var ks_pfm = GM_getValue(role + "_ks_pfm", ks_pfm);
+            console.log("boss");
+            var boss_place = data.content.match("出现在([^%]+)一带。")[1];
+            console.log(boss_place);
+            if (autoKsBoss == "已开启") {
+                messageAppend("自动前往BOSS地点");
+                WG.Send("stopstate");
+                WG.go(boss_place);
+                var ksboss = WG.add_hook(["items", "itemadd", "die"], function (data) {
+                    if (data.type == "items") {
+                        findboss(data, boss_name, function (bid) {
+                            if (bid != -1) {
                                 next = 0;
-                                if(WG.at(boss_place)){
-                                WG.get_all();
-
                                 setTimeout(() => {
-                                    console.log("boss找不到溜了");
-                                    WG.zdwk();
-                                }, 15000);
-                                    console.log(ksboss);
-                                    WG.remove_hook(ksboss.index);
+                                    WG.Send("kill " + bid);
+                                }, Number(ks_pfm));
+                            } else {
+                                let lj = needfind[boss_place];
+                                if (needfind[boss_place] != undefined && next < lj.length) {
+                                    WG.Send(lj[next]);
+                                    next++;
+                                } else {
+                                    console.log("not found");
                                 }
                             }
-                        }
-                    });
+                        });
 
-                }
-                if (data.type == "itemadd") {
-                    if (data.name.indexOf(boss_name) >= 0) {
+                    }
+                    if (data.type == "itemadd") {
+                        if (data.name.indexOf(boss_name) >= 0) {
+                            next = 0;
+                            WG.get_all();
+                            setTimeout(() => {
+                                console.log("拾取");
+                                WG.zdwk();
+                            }, 15000);
+                            console.log(this.index);
+                            WG.remove_hook(this.index);
+                        }
+                    }
+                    if (data.type == "die") {
                         next = 0;
-                        WG.get_all();
+                        WG.Send('relive');
                         setTimeout(() => {
-                            console.log("拾取");
+                            console.log("死了");
                             WG.zdwk();
                         }, 15000);
-                            console.log(ksboss.index);
-                            WG.remove_hook(ksboss.index);
-                    }
-                }
-                if (data.type == "die") {
-                    next = 0;
-                    WG.Send('relive');
-                    setTimeout(() => {
-                        console.log("死了");
-                        WG.zdwk();
-                    }, 15000);
                         console.log(this.index);
                         WG.remove_hook(this.index);
-                }
-                //WG.kill_all();
-            });
-        }
-    }
-
-    function xiyan() {
-        WG.Send("stopstate");
-        WG.go("扬州城-喜宴");
-        var h = WG.add_hook(['items', 'cmds', 'text', 'msg'], function (data) {
-
-            if (data.type == 'items') {
-
-                for (let idx = 0; idx < data.items.length; idx++) {
-                    if (data.items[idx].name == '<hio>婚宴礼桌</hio>' || data.items[idx].name == '<hiy>婚宴礼桌</hiy>') {
-                        console.log("拾取");
-                        WG.Send('get all from ' + data.items[idx].id);
-
-                        WG.zdwk();
-                        console.log("xy" + h);
-                        WG.remove_hook(h);
-
-                        break;
                     }
-                }
-            } else if (data.type == 'text') {
-                if (data.msg == "你要给谁东西？") {
-                    console.log("没人");
-                    console.log("xy" );
-                    WG.remove_hook(h);
-                    WG.zdwk();
-                }
-                if (/^店小二拦住你说道：怎么又是你，每次都跑这么快，等下再进去。$/.test(data.msg)) {
-                    console.log("cd");
-                    messageAppend("<hiy>你太勤快了, 1秒后回去挖矿</hiy>")
-                    setTimeout(() => {
-                        WG.zdwk();
-                    }, 1000);
-                    console.log("xy" );
-                    WG.remove_hook(h);
-                }
-                if (/^店小二拦住你说道：这位(.+)，不好意思，婚宴宾客已经太多了。$/.test(data.msg)) {
-                    console.log("客满");
-                    messageAppend("<hiy>你来太晚了, 1秒后回去挖矿</hiy>")
-                    setTimeout(() => {
-                        WG.zdwk();
-                    }, 1000);
-                    console.log("xy" );
-                    WG.remove_hook(h);
-
-                }
-            } else if (data.type == 'cmds') {
-
-                for (let idx = 0; idx < data.items.length; idx++) {
-                    if (data.items[idx].name == '1金贺礼') {
-                        WG.Send(data.items[idx].cmd + ';go up');
-                        console.log("交钱");
-                        break;
-                    }
-                }
+                    //WG.kill_all();
+                });
             }
-        });
+        },
 
-    }
+        xiyan: function () {
+            WG.Send("stopstate");
+            WG.go("扬州城-喜宴");
+            var h = WG.add_hook(['items', 'cmds', 'text', 'msg'], function (data) {
+
+                if (data.type == 'items') {
+
+                    for (let idx = 0; idx < data.items.length; idx++) {
+                        if (data.items[idx].name == '<hio>婚宴礼桌</hio>' || data.items[idx].name == '<hiy>婚宴礼桌</hiy>') {
+                            console.log("拾取");
+                            WG.Send('get all from ' + data.items[idx].id);
+
+                            WG.zdwk();
+                            console.log("xy" + this.index);
+                            WG.remove_hook(this.index);
+
+                            break;
+                        }
+                    }
+                } else if (data.type == 'text') {
+                    if (data.msg == "你要给谁东西？") {
+                        console.log("没人");
+                        console.log("xy");
+                        WG.remove_hook(this.index);
+                        WG.zdwk();
+                    }
+                    if (/^店小二拦住你说道：怎么又是你，每次都跑这么快，等下再进去。$/.test(data.msg)) {
+                        console.log("cd");
+                        messageAppend("<hiy>你太勤快了, 1秒后回去挖矿</hiy>")
+                        setTimeout(() => {
+                            WG.zdwk();
+                        }, 1000);
+                        console.log("xy" + this.index);
+                        WG.remove_hook(this.index);
+                    }
+                    if (/^店小二拦住你说道：这位(.+)，不好意思，婚宴宾客已经太多了。$/.test(data.msg)) {
+                        console.log("客满");
+                        messageAppend("<hiy>你来太晚了, 1秒后回去挖矿</hiy>")
+                        setTimeout(() => {
+                            WG.zdwk();
+                        }, 1000);
+                        console.log("xy");
+                        WG.remove_hook(this.index);
+
+                    }
+                } else if (data.type == 'cmds') {
+
+                    for (let idx = 0; idx < data.items.length; idx++) {
+                        if (data.items[idx].name == '1金贺礼') {
+                            WG.Send(data.items[idx].cmd + ';go up');
+                            console.log("交钱");
+                            break;
+                        }
+                    }
+                }
+            });
+
+        },
+    };
     $(document).ready(function () {
         $('head').append('<link href="https://s1.pstatp.com/cdn/expire-1-y/jquery-contextmenu/2.6.3/jquery.contextMenu.min.css" rel="stylesheet">');
         KEY.init();
@@ -1431,14 +1433,14 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                     if (automarry == "已开启") {
                         console.log("xiyan");
                         messageAppend("自动前往婚宴地点")
-                        xiyan();
+                        Helper.xiyan();
                     } else if (automarry == "已停止") {
                         var b = "<div class=\"item-commands\"><span  id = 'onekeyjh'>参加喜宴</span></div>"
                         messageClear();
                         messageAppend("<hiy>点击参加喜宴</hiy>");
                         messageAppend(b);
                         $('#onekeyjh').on('click', function () {
-                            xiyan();
+                            Helper.xiyan();
                         });
                     }
                 }
@@ -1448,14 +1450,14 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                     data.content.indexOf("出现在") >= 0 &&
                     data.content.indexOf("一带。") >= 0) {
                     console.dir(data);
-                    kksBoss(data);
+                    Helper.kksBoss(data);
                 } else if (autoKsBoss == "已停止") {
                     var c = "<div class=\"item-commands\"><span id = 'onekeyKsboss'>传送到boss</span></div>";
                     messageClear();
                     messageAppend("boss已出现");
                     messageAppend(c);
                     $('#onekeyKsboss').on('click', function () {
-                        kksBoss(data);
+                        Helper.kksBoss(data);
                     });
                 }
             }
@@ -1495,7 +1497,7 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                 "手动喜宴": {
                     name: "手动喜宴",
                     callback: function (key, opt) {
-                        xiyan();
+                        Helper.xiyan();
 
                     },
                 },
