@@ -1309,7 +1309,7 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                 WG.go(boss_place);
                 var ksboss = WG.add_hook(["items", "itemadd", "die"], function (data) {
                     if (data.type == "items") {
-                        findboss(data, boss_name, function (bid) {
+                        Helper.findboss(data, boss_name, function (bid) {
                             if (bid != -1) {
                                 next = 0;
                                 setTimeout(() => {
