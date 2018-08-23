@@ -1350,7 +1350,7 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                 console.log(this.ksBoss);
                 setTimeout(() => {
                     console.log("挖矿");
-                    WG.remove_hook(this.ksboss.index);
+                    WG.remove_hook(this.ksboss);
                     WG.zdwk();
                 }, 30000);
             }
