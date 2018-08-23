@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         wsmud_pluginss
 // @namespace    cqv1
-// @version      0.0.21
+// @version      0.0.21.1
 // @date         01/07/2018
 // @modified     23/08/2018
 // @homepage     https://greasyfork.org/zh-CN/scripts/371372
@@ -1347,7 +1347,7 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                     }
                     //WG.kill_all();
                 });
-                console.log(this.ksBoss);
+                console.log(this.ksboss);
                 setTimeout(() => {
                     console.log("挖矿");
                     WG.remove_hook(this.ksboss);
