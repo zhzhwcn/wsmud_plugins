@@ -93,7 +93,7 @@
             }
         };
     } else {
-        console.log("插件不可运行,Plugins are not functioning properly.");
+        console.log("插件不可运行,请打开'https://greasyfork.org/zh-CN/forum/discussion/41547/x',按照操作步骤进行操作,Plugins are not functioning properly.plase open https://greasyfork.org/zh-CN/forum/discussion/41547/x");
     }
     var roomItemSelectIndex = -1;
     var timer = 0;
