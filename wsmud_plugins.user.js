@@ -1291,8 +1291,8 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                                 WG.Send("kill " + bid);
                             }, Number(ks_pfm));
                         } else {
-                            if (needfind[boss_place] != undefined) {
-                                let lj = needfind[boss_place];
+                            let lj = needfind[boss_place];
+                            if (needfind[boss_place] != undefined && next < lj.length) {
                                 WG.Send(lj[next]);
                                 next++;
                             }else{
@@ -1304,8 +1304,8 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                                     console.log("boss找不到溜了");
                                     WG.zdwk();
                                 }, 15000);
-                                    console.log(this.index);
-                                    WG.remove_hook(this.index);
+                                    console.log(ksboss);
+                                    WG.remove_hook(ksboss.index);
                                 }
                             }
                         }
@@ -1320,8 +1320,8 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                             console.log("拾取");
                             WG.zdwk();
                         }, 15000);
-                            console.log(this.index);
-                            WG.remove_hook(this.index);
+                            console.log(ksboss.index);
+                            WG.remove_hook(ksboss.index);
                     }
                 }
                 if (data.type == "die") {
