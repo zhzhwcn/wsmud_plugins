@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         wsmud_pluginss
 // @namespace    cqv1
-// @version      0.0.20
+// @version      0.0.21
 // @date         01/07/2018
 // @modified     23/08/2018
 // @homepage     https://greasyfork.org/zh-CN/scripts/371372
@@ -9,8 +9,8 @@
 // @author       fjcqv(源程序) & zhzhwcn(提供websocket监听)& knva(做了一些微小的贡献)
 // @match        http://game.wsmud.com/*
 // @run-at       document-start
-// @require      https://s2.pstatp.com/cdn/expire-1-y/jquery/3.2.1/jquery.min.js
-// @require      https://s3.pstatp.com/cdn/expire-1-y/jquery-contextmenu/2.6.3/jquery.contextMenu.min.js
+// @require      https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js
+// @require      https://cdn.bootcss.com/jquery-contextmenu/3.0.0-beta.2/jquery.contextMenu.min.js
 // @grant        unsafeWindow
 // @grant        GM_addStyle
 // @grant        GM_getValue
@@ -25,10 +25,75 @@
         }
         this.splice(dx, 1);
     }
-    if (window.WebSocket) {
-        console.log('sup');
-        var _ws = window.WebSocket,
+
+    if (WebSocket) {
+        console.log('插件可正常运行,Plugins can run normally');
+        var _ws = WebSocket,
             ws, ws_on_message;
+        unsafeWindow.WebSocket = function (uri) {
+            ws = new _ws(uri);
+        };
+        unsafeWindow.WebSocket.prototype = {
+            CONNECTING: _ws.CONNECTING,
+            OPEN: _ws.OPEN,
+            CLOSING: _ws.CLOSING,
+            CLOSED: _ws.CLOSED,
+            get url() {
+                return ws.url;
+            },
+            get protocol() {
+                return ws.protocol;
+            },
+            get readyState() {
+                return ws.readyState;
+            },
+            get bufferedAmount() {
+                return ws.bufferedAmount;
+            },
+            get extensions() {
+                return ws.extensions;
+            },
+            get binaryType() {
+                return ws.binaryType;
+            },
+            set binaryType(t) {
+                ws.binaryType = t;
+            },
+            get onopen() {
+                return ws.onopen;
+            },
+            set onopen(fn) {
+                ws.onopen = fn;
+            },
+            get onmessage() {
+                return ws.onmessage;
+            },
+            set onmessage(fn) {
+                ws_on_message = fn;
+                ws.onmessage = WG.receive_message;
+            },
+            get onclose() {
+                return ws.onclose;
+            },
+            set onclose(fn) {
+                ws.onclose = fn;
+            },
+            get onerror() {
+                return ws.onerror;
+            },
+            set onerror(fn) {
+                ws.onerror = fn;
+            },
+            send: function (text) {
+
+                ws.send(text);
+            },
+            close: function () {
+                ws.close();
+            }
+        };
+    } else {
+        console.log("插件不可运行,Plugins are not functioning properly.");
     }
     var roomItemSelectIndex = -1;
     var timer = 0;
@@ -652,10 +717,20 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
             $(".sell_all").on("click", WG.sell_all);
             $(".zdwk").on("click", WG.zdwk);
             setTimeout(() => {
-                var logintext = `
+                var logintext = '';
+                if (WebSocket) {
+                 logintext = `
 <hiy>欢迎${role},插件已加载！第一次使用,请在设置中,初始化ID,并且设置一下是否自动婚宴,自动传送boss
 插件版本: ${GM_info.script.version}
 </hiy>`;
+                }
+                else
+                {
+                 logintext =    `
+<hiy>欢迎${role},插件已加载！第一次使用,请在设置中,初始化ID,当前浏览器不支持自动喜宴自动boss,请使用火狐浏览器
+插件版本: ${GM_info.script.version}
+</hiy>`;
+                }
                 messageAppend(logintext);
                 KEY.do_command("showtool");
                 KEY.do_command("pack");
@@ -1169,68 +1244,7 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
             WG.run_hook(data.type, data);
         },
     };
-    unsafeWindow.WebSocket = function (uri) {
-        ws = new _ws(uri);
-    };
-    unsafeWindow.WebSocket.prototype = {
-        CONNECTING: _ws.CONNECTING,
-        OPEN: _ws.OPEN,
-        CLOSING: _ws.CLOSING,
-        CLOSED: _ws.CLOSED,
-        get url() {
-            return ws.url;
-        },
-        get protocol() {
-            return ws.protocol;
-        },
-        get readyState() {
-            return ws.readyState;
-        },
-        get bufferedAmount() {
-            return ws.bufferedAmount;
-        },
-        get extensions() {
-            return ws.extensions;
-        },
-        get binaryType() {
-            return ws.binaryType;
-        },
-        set binaryType(t) {
-            ws.binaryType = t;
-        },
-        get onopen() {
-            return ws.onopen;
-        },
-        set onopen(fn) {
-            ws.onopen = fn;
-        },
-        get onmessage() {
-            return ws.onmessage;
-        },
-        set onmessage(fn) {
-            ws_on_message = fn;
-            ws.onmessage = WG.receive_message;
-        },
-        get onclose() {
-            return ws.onclose;
-        },
-        set onclose(fn) {
-            ws.onclose = fn;
-        },
-        get onerror() {
-            return ws.onerror;
-        },
-        set onerror(fn) {
-            ws.onerror = fn;
-        },
-        send: function (text) {
 
-            ws.send(text);
-        },
-        close: function () {
-            ws.close();
-        }
-    };
 
     var Helper = {
         formatCurrencyTenThou: function (num) {
