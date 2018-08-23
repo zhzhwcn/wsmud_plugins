@@ -9,8 +9,8 @@
 // @author       fjcqv(源程序) & zhzhwcn(提供websocket监听)& knva(做了一些微小的贡献)
 // @match        http://game.wsmud.com/*
 // @run-at       document-start
-// @require      https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js
-// @require      https://cdn.bootcss.com/jquery-contextmenu/3.0.0-beta.2/jquery.contextMenu.min.js
+// @require      https://s2.pstatp.com/cdn/expire-1-y/jquery/3.2.1/jquery.min.js
+// @require      https://s3.pstatp.com/cdn/expire-1-y/jquery-contextmenu/2.6.3/jquery.contextMenu.min.js
 // @grant        unsafeWindow
 // @grant        GM_addStyle
 // @grant        GM_getValue
@@ -1398,7 +1398,7 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
 
     }
     $(document).ready(function () {
-        $('head').append('<link href="https://cdn.bootcss.com/jquery-contextmenu/3.0.0-beta.2/jquery.contextMenu.min.css" rel="stylesheet">');
+        $('head').append('<link href="https://s1.pstatp.com/cdn/expire-1-y/jquery-contextmenu/2.6.3/jquery.contextMenu.min.css" rel="stylesheet">');
         KEY.init();
         WG.init();
 
