@@ -719,14 +719,12 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
             setTimeout(() => {
                 var logintext = '';
                 if (WebSocket) {
-                 logintext = `
+                    logintext = `
 <hiy>欢迎${role},插件已加载！第一次使用,请在设置中,初始化ID,并且设置一下是否自动婚宴,自动传送boss
 插件版本: ${GM_info.script.version}
 </hiy>`;
-                }
-                else
-                {
-                 logintext =    `
+                } else {
+                    logintext = `
 <hiy>欢迎${role},插件已加载！第一次使用,请在设置中,初始化ID,当前浏览器不支持自动喜宴自动boss,请使用火狐浏览器
 插件版本: ${GM_info.script.version}
 </hiy>`;
@@ -1204,7 +1202,7 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                 'fn': fn
             };
             WG.hooks.push(hook);
-            return hook.id;
+            return hook.index;
         },
         remove_hook: function (hookindex) {
             var that = this;
@@ -1286,17 +1284,15 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
             }
             callback(-1);
         },
-
+        ksboss: '',
         kksBoss: function (data) {
 
             var boss_name = data.content.match("听说([^%]+)出现在");
             if (boss_name == null) {
                 return;
             }
-            setTimeout(() => {
-                console.log("挖矿");
-                WG.zdwk();
-            }, 30000);
+
+
             boss_name = data.content.match("听说([^%]+)出现在")[1];
             var autoKsBoss = GM_getValue(role + "_autoKsBoss", autoKsBoss);
             var ks_pfm = GM_getValue(role + "_ks_pfm", ks_pfm);
@@ -1307,7 +1303,7 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                 messageAppend("自动前往BOSS地点");
                 WG.Send("stopstate");
                 WG.go(boss_place);
-                var ksboss = WG.add_hook(["items", "itemadd", "die"], function (data) {
+                this.ksboss = WG.add_hook(["items", "itemadd", "die"], function (data) {
                     if (data.type == "items") {
                         Helper.findboss(data, boss_name, function (bid) {
                             if (bid != -1) {
@@ -1351,6 +1347,12 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                     }
                     //WG.kill_all();
                 });
+                console.log(this.ksBoss);
+                setTimeout(() => {
+                    console.log("挖矿");
+                    WG.remove_hook(this.ksboss.index);
+                    WG.zdwk();
+                }, 30000);
             }
         },
 
@@ -1512,6 +1514,15 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                     name: "手动喜宴",
                     callback: function (key, opt) {
                         Helper.xiyan();
+
+                    },
+                },
+                "调试boss": {
+                    name: "调试boss",
+                    callback: function (key, opt) {
+                        Helper.kksBoss({
+                            "content": "听说xx出现在逍遥派-林间小道一带。"
+                        });
 
                     },
                 },
