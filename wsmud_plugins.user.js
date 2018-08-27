@@ -1582,9 +1582,9 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                     name: "常用地点",
                     "items": {
                         "mp0": {
-                            name: "矿山",
+                            name: "豪宅",
                             callback: function (key, opt) {
-                                WG.go("扬州城-矿山");
+                                WG.go("豪宅");
                             },
                         },
                         "mp1": {
@@ -1605,65 +1605,71 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                                 WG.go("扬州城-帮派");
                             },
                         },
+                        "mp4": {
+                            name: "武道",
+                            callback: function (key, opt) {
+                                WG.go("武道塔");
+                            },
+                        },
+                        "mp5": {
+                            name: "矿山",
+                            callback: function (key, opt) {
+                                WG.go("扬州城-矿山");
+                            },
+                        },
+                        "mp6":{
+                            name:"药铺",
+                            callback:function(key,opt){
+                                WG.go("扬州城-药铺");
+                            },
+                        }
                     },
                 },
                 "门派传送": {
                     name: "门派传送",
                     "items": {
                         "mp0": {
-                            name: "豪宅",
-                            callback: function (key, opt) {
-                                WG.go("住房");
-                            },
-                        },
-                        "mp1": {
                             name: "武当",
                             callback: function (key, opt) {
                                 WG.go("武当派-广场");
                             },
                         },
-                        "mp2": {
+                        "mp1": {
                             name: "少林",
                             callback: function (key, opt) {
                                 WG.go("少林派-广场");
                             },
                         },
-                        "mp3": {
+                        "mp2": {
                             name: "华山",
                             callback: function (key, opt) {
                                 WG.go("华山派-镇岳宫");
                             },
                         },
-                        "mp4": {
+                        "mp3": {
                             name: "峨眉",
                             callback: function (key, opt) {
                                 WG.go("峨眉派-金顶");
                             },
                         },
-                        "mp5": {
+                        "mp4": {
                             name: "逍遥",
                             callback: function (key, opt) {
                                 WG.go("逍遥派-青草坪");
                             },
                         },
-                        "mp6": {
+                        "mp5": {
                             name: "丐帮",
                             callback: function (key, opt) {
                                 WG.go("丐帮-树洞内部");
                             },
                         },
-                        "mp7": {
+                        "mp6": {
                             name: "襄阳",
                             callback: function (key, opt) {
                                 WG.go("襄阳城-广场");
                             },
-                        },
-                        "mp8": {
-                            name: "武道",
-                            callback: function (key, opt) {
-                                WG.go("武道塔");
-                            },
-                        },
+                        }
                     },
                 },
                 "更新ID": {
