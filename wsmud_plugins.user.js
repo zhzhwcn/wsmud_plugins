@@ -101,6 +101,7 @@
     var zb_npc;
     var zb_place;
     var next = 0;
+    var roomData = [];
     var needfind = {
         "武当派-林间小径": ["go south"],
         "峨眉派-走廊": ["go north", "go south;go south", "go north;go east;go east"],
@@ -636,9 +637,19 @@
     }
     var log_line = 0;
 
-    function messageAppend(m) {
+    function messageAppend(m, t = 0) {
         100 < log_line && (log_line = 0, $(".WG_log pre").empty());
-        $(".WG_log pre").append(m + "\n");
+        var ap = m + "\n";
+        if (t == 1) {
+            ap = "<hiy>" + ap + "</hiy>";
+        }
+        if (t == 2) {
+            ap = "<hig>" + ap + "</hig>";
+        }
+        if (t == 3) {
+            ap = "<hiw>" + ap + "</hiw>";
+        }
+        $(".WG_log pre").append(ap);
         log_line++;
         $(".WG_log")[0].scrollTop = 99999;
     }
@@ -1104,7 +1115,8 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
             this.fbnum += 1;
             messageAppend("第" + this.fbnum + "次");
             WG.Send("cr yz/lw/shangu;cr over");
-            if(this.needGrove==this.fbnum){
+            if (this.needGrove == this.fbnum) {
+                messageAppend("<hiy>" + this.fbnum + "次副本小树林秒进秒退已完成</hiy>");
                 this.timer_close();
             }
         },
@@ -1433,12 +1445,35 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                 next = 0;
             }, 30000);
         },
+        showhp(id) {
+            let re = '';
+            for (let i = 0; i < roomData.length; i++) {
+                if (roomData[i] != 0) {
+                    if (roomData[i].id == id) {
+                        re = "角色名:" + roomData[i].name + "\n";
+                        re += "血量:" + roomData[i].max_hp;
+                        return re;
+                    }
+                }
+            }
+            return '';
+        },
+        saveRoomstate(data) {
+            roomData = data.items;
+        },
     };
     $(document).ready(function () {
         $('head').append('<link href="https://s1.pstatp.com/cdn/expire-1-y/jquery-contextmenu/2.6.3/jquery.contextMenu.min.css" rel="stylesheet">');
         KEY.init();
         WG.init();
-
+        WG.add_hook("items", function (data) {
+            Helper.saveRoomstate(data);
+        });
+        WG.add_hook("item", function (data) {
+            if (data.id != null) {
+                messageAppend(Helper.showhp(data.id));
+            }
+        });
         WG.add_hook("state", function (data) {
             console.dir(data);
         });
