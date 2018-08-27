@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         wsmud_pluginss
 // @namespace    cqv1
-// @version      0.0.21.1
+// @version      0.0.21.7
 // @date         01/07/2018
-// @modified     23/08/2018
+// @modified     27/08/2018
 // @homepage     https://greasyfork.org/zh-CN/scripts/371372
 // @description  武神传说 MUD
 // @author       fjcqv(源程序) & zhzhwcn(提供websocket监听)& knva(做了一些微小的贡献)
@@ -1098,6 +1098,37 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
             }
 
         },
+        fbnum: 0,
+        needGrove: 0,
+        oncegrove: function () {
+            this.fbnum += 1;
+            messageAppend("第" + this.fbnum + "次");
+            WG.Send("cr yz/lw/shangu;cr over");
+            if(this.needGrove==this.fbnum){
+                this.timer_close();
+            }
+        },
+        grove_ask_info: function () {
+            return prompt("请输入需要秒进秒退的副本次数", "");
+        },
+        grove_auto: function () {
+            if (timer == 0) {
+                this.needGrove = this.grove_ask_info();
+                if (this.needGrove) //如果返回的有内容  
+                {
+                    if (parseFloat(this.needGrove).toString() == "NaN") {
+                        messageAppend("请输入数字");
+                        return;
+                    }
+                    messageAppend("开始秒进秒退小树林" + this.needGrove + "次");
+
+                    timer = setInterval(() => {
+                        this.oncegrove()
+                    }, 1000);
+                }
+            }
+
+        },
         showhideborad: function () {
             if ($('.WG_log').css('display') == 'none') {
                 $('.WG_log').show();
@@ -1285,19 +1316,18 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
             callback(-1);
         },
         ksboss: '',
+        marryhy: '',
         kksBoss: function (data) {
-
+            var boss_place = boss_place = data.content.match("出现在([^%]+)一带。");
             var boss_name = data.content.match("听说([^%]+)出现在");
-            if (boss_name == null) {
+            if (boss_name == null && boss_place == null) {
                 return;
             }
-
-
             boss_name = data.content.match("听说([^%]+)出现在")[1];
+            boss_place = data.content.match("出现在([^%]+)一带。")[1];
             var autoKsBoss = GM_getValue(role + "_autoKsBoss", autoKsBoss);
             var ks_pfm = GM_getValue(role + "_ks_pfm", ks_pfm);
             console.log("boss");
-            var boss_place = data.content.match("出现在([^%]+)一带。")[1];
             console.log(boss_place);
             if (autoKsBoss == "已开启") {
                 messageAppend("自动前往BOSS地点");
@@ -1305,6 +1335,9 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                 WG.go(boss_place);
                 this.ksboss = WG.add_hook(["items", "itemadd", "die"], function (data) {
                     if (data.type == "items") {
+                        if (!WG.at(boss_place)) {
+                            return;
+                        }
                         Helper.findboss(data, boss_name, function (bid) {
                             if (bid != -1) {
                                 next = 0;
@@ -1327,10 +1360,6 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                         if (data.name.indexOf(boss_name) >= 0) {
                             next = 0;
                             WG.get_all();
-                            setTimeout(() => {
-                                console.log("拾取");
-                                WG.zdwk();
-                            }, 15000);
                             console.log(this.index);
                             WG.remove_hook(this.index);
                         }
@@ -1338,10 +1367,6 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                     if (data.type == "die") {
                         next = 0;
                         WG.Send('relive');
-                        setTimeout(() => {
-                            console.log("死了");
-                            WG.zdwk();
-                        }, 15000);
                         console.log(this.index);
                         WG.remove_hook(this.index);
                     }
@@ -1352,6 +1377,7 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                     console.log("挖矿");
                     WG.remove_hook(this.ksboss);
                     WG.zdwk();
+                    next = 0;
                 }, 30000);
             }
         },
@@ -1359,7 +1385,7 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
         xiyan: function () {
             WG.Send("stopstate");
             WG.go("扬州城-喜宴");
-            var h = WG.add_hook(['items', 'cmds', 'text', 'msg'], function (data) {
+            this.marryhy = WG.add_hook(['items', 'cmds', 'text', 'msg'], function (data) {
 
                 if (data.type == 'items') {
 
@@ -1367,8 +1393,6 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                         if (data.items[idx].name == '<hio>婚宴礼桌</hio>' || data.items[idx].name == '<hiy>婚宴礼桌</hiy>') {
                             console.log("拾取");
                             WG.Send('get all from ' + data.items[idx].id);
-
-                            WG.zdwk();
                             console.log("xy" + this.index);
                             WG.remove_hook(this.index);
 
@@ -1378,27 +1402,17 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                 } else if (data.type == 'text') {
                     if (data.msg == "你要给谁东西？") {
                         console.log("没人");
-                        console.log("xy");
                         WG.remove_hook(this.index);
-                        WG.zdwk();
                     }
                     if (/^店小二拦住你说道：怎么又是你，每次都跑这么快，等下再进去。$/.test(data.msg)) {
                         console.log("cd");
                         messageAppend("<hiy>你太勤快了, 1秒后回去挖矿</hiy>")
-                        setTimeout(() => {
-                            WG.zdwk();
-                        }, 1000);
                         console.log("xy" + this.index);
                         WG.remove_hook(this.index);
                     }
                     if (/^店小二拦住你说道：这位(.+)，不好意思，婚宴宾客已经太多了。$/.test(data.msg)) {
                         console.log("客满");
                         messageAppend("<hiy>你来太晚了, 1秒后回去挖矿</hiy>")
-                        setTimeout(() => {
-                            WG.zdwk();
-                        }, 1000);
-                        console.log("xy");
-                        WG.remove_hook(this.index);
 
                     }
                 } else if (data.type == 'cmds') {
@@ -1412,7 +1426,12 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                     }
                 }
             });
-
+            setTimeout(() => {
+                console.log("挖矿");
+                WG.remove_hook(this.marryhy);
+                WG.zdwk();
+                next = 0;
+            }, 30000);
         },
     };
     $(document).ready(function () {
@@ -1508,21 +1527,18 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                                 WG.wudao_auto();
                             },
                         },
+                        "自动小树林": {
+                            name: "自动小树林",
+                            callback: function (key, opt) {
+                                WG.grove_auto();
+                            }
+                        }
                     },
                 },
                 "手动喜宴": {
                     name: "手动喜宴",
                     callback: function (key, opt) {
                         Helper.xiyan();
-
-                    },
-                },
-                "调试boss": {
-                    name: "调试boss",
-                    callback: function (key, opt) {
-                        Helper.kksBoss({
-                            "content": "听说xx出现在逍遥派-林间小道一带。"
-                        });
 
                     },
                 },
