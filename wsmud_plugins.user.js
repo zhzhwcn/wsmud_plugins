@@ -1451,7 +1451,8 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                 if (roomData[i] != 0) {
                     if (roomData[i].id == id) {
                         re = "角色名:" + roomData[i].name + "\n";
-                        re += "血量:" + roomData[i].max_hp;
+                        re += "血量:" + roomData[i].max_hp+"\n";
+                        re += "蓝量:" + roomData[i].max_mp;
                         return re;
                     }
                 }
