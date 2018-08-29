@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         wsmud_pluginss
 // @namespace    cqv1
-// @version      0.0.21.7
+// @version      0.0.21.10
 // @date         01/07/2018
 // @modified     27/08/2018
 // @homepage     https://greasyfork.org/zh-CN/scripts/371372
@@ -267,6 +267,7 @@
     };
     var place = {
         "住房": "jh fam 0 start;go west;go west;go north;go enter",
+        "仓库": "jh fam 0 start;go north;go west;store",
         "扬州城-醉仙楼": "jh fam 0 start;go north;go north;go east",
         "扬州城-杂货铺": "jh fam 0 start;go east;go south",
         "扬州城-打铁铺": "jh fam 0 start;go east;go east;go south",
@@ -1332,7 +1333,7 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
         kksBoss: function (data) {
             var boss_place = boss_place = data.content.match("出现在([^%]+)一带。");
             var boss_name = data.content.match("听说([^%]+)出现在");
-            if (boss_name == null && boss_place == null) {
+            if (boss_name == null || boss_place == null) {
                 return;
             }
             boss_name = data.content.match("听说([^%]+)出现在")[1];
@@ -1386,11 +1387,12 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                 });
                 console.log(this.ksboss);
                 setTimeout(() => {
-                    console.log("挖矿");
+                    console.log("复活挖矿");
+                    WG.Send('relive');
                     WG.remove_hook(this.ksboss);
                     WG.zdwk();
                     next = 0;
-                }, 30000);
+                }, 60000);
             }
         },
 
@@ -1584,7 +1586,7 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                         "mp0": {
                             name: "豪宅",
                             callback: function (key, opt) {
-                                WG.go("豪宅");
+                                WG.go("住房");
                             },
                         },
                         "mp1": {
@@ -1670,6 +1672,12 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                                 WG.go("襄阳城-广场");
                             },
                         }
+                    },
+                },
+                "打开仓库": {
+                    name: "打开仓库",
+                    callback: function (key, opt) {
+                        WG.go("仓库");
                     },
                 },
                 "更新ID": {
