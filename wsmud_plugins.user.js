@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         wsmud_pluginss
 // @namespace    cqv1
-// @version      0.0.22.9
+// @version      0.0.23.4
 // @date         01/07/2018
 // @modified     27/08/2018
 // @homepage     https://greasyfork.org/zh-CN/scripts/371372
@@ -16,7 +16,7 @@
 // @grant        GM_getValue
 // @grant        GM_setValue
 // ==/UserScript==
-// 2018年9月1日10:08:31 优化师门任务
+// 2018年9月3日11:58:04 修复尸体显血
 (function () {
     'use strict';
     Array.prototype.baoremove = function (dx) {
@@ -111,6 +111,7 @@
         "逍遥派-地下石室": ["go up"],
         "逍遥派-木屋": ["go south;go south;go south;go south"]
     };
+
     var goods = {
         //扬州城-醉仙楼-店小二
         "米饭": {
@@ -368,6 +369,12 @@
     var automarry = null;
     var autoKsBoss = null;
     var showHP = null;
+    var eqlist = {
+        1: [],
+        2: [],
+        3: []
+    };
+    var autoeq = 999;
     //快捷键功能
     var KEY = {
         keys: [],
@@ -720,6 +727,8 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
             autoKsBoss = GM_getValue(role + "_autoKsBoss", autoKsBoss);
             showHP = GM_getValue(role + "_showHP", showHP);
             ks_pfm = GM_getValue(role + "_ks_pfm", ks_pfm);
+            eqlist = GM_getValue(role + "_eqlist", eqlist);
+            autoeq = GM_getValue(role + "_auto_eq", autoeq);
             if (family == null) {
                 family = $('.role-list .select').text().substr(0, 2);
             }
@@ -753,7 +762,6 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                 messageAppend(logintext);
                 KEY.do_command("showtool");
                 KEY.do_command("pack");
-
                 KEY.do_command("pack");
                 KEY.do_command("showcombat");
             }, 1000);
@@ -1271,8 +1279,17 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
 <option value="已开启">已开启</option>
 </select>
 </span>
+</span>
+<span><label for="auto_eq">BOSS击杀时自动换装： </label><select style='width:80px' id = "auto_eq">
+<option value="999">已停止</option>
+<option value="1">套装1</option>
+<option value="2">套装2</option>
+<option value="3">套装3</option>
+</select>
+</span>
 <span><label for="ks_pfm">叫杀延时(ms)： </label><input style='width:80px' type="text" id="ks_pfm" name="ks_pfm" value=""></span>
-<div class="item-commands"><span class="updete_id_all">初始化ID</span></div></div>
+<div class="item-commands"><span class="updete_id_all">初始化ID</span></div>
+</div>
 `;
             messageAppend(a);
             $('#family').val(family);
@@ -1306,7 +1323,12 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                 GM_setValue(role + "_showHP", showHP);
                 Helper.showallhp();
             });
+            $('#auto_eq').val(autoeq);
+            $('#auto_eq').change(function () {
+                autoeq = $('#auto_eq').val();
+                GM_setValue(role + "_auto_eq", autoeq);
 
+            });
             $(".updete_id_all").on("click", WG.updete_id_all);
         },
         hooks: [],
@@ -1412,6 +1434,7 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
             boss_place = data.content.match("出现在([^%]+)一带。")[1];
             var autoKsBoss = GM_getValue(role + "_autoKsBoss", autoKsBoss);
             var ks_pfm = GM_getValue(role + "_ks_pfm", ks_pfm);
+            var autoeq = GM_getValue(role + "_auto_eq", autoeq);
             console.log("boss");
             console.log(boss_place);
             messageAppend("自动前往BOSS地点");
@@ -1425,9 +1448,10 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                     Helper.findboss(data, boss_name, function (bid) {
                         if (bid != -1) {
                             next = 999;
+                            Helper.eqhelper(autoeq);
                             setTimeout(() => {
-                                WG.Send("kill " + bid);
-                                //WG.Send("select " + bid);
+                                //WG.Send("kill " + bid);
+                                WG.Send("select " + bid);
                                 next = 0;
                             }, Number(ks_pfm));
                         } else {
@@ -1552,10 +1576,12 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
             if (myshow == "已开启") {
                 roomData.forEach(function (v, k) {
                     if (v != 0) {
-                        $(".plushp[itemid=" + v.id + "]").remove();
-                        $("[itemid=" + v.id + "]").after("<label class='plushp' " +
-                            "itemid='" + v.id + "'style='margin-left:30px;    margin-top: -16px; '>血量:" +
-                            v.hp + "/" + v.max_hp + "</label>")
+                        if (v.hp) {
+                            $(".plushp[itemid=" + v.id + "]").remove();
+                            $("[itemid=" + v.id + "]").after("<label class='plushp' " +
+                                "itemid='" + v.id + "'style='margin-left:30px;    margin-top: -16px; '>血量:" +
+                                v.hp + "/" + v.max_hp + "</label>")
+                        }
                     }
                 });
             } else if (myshow == "已停止") {
@@ -1563,7 +1589,44 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
 
             }
         },
+        eqx: null,
+        eqhelper(type) {
+            if (type == 0 || type > eqlist.length) {
+                return;
+            }
+            if (eqlist == null || eqlist[type] == "") {
+                messageAppend("套装未保存,保存当前装备作为套装" + type + "!", 1);
+                this.eqx = WG.add_hook("dialog", (data) => {
+                    if (data.dialog == "pack" && data.eqs != undefined) {
+                        eqlist[type] = data.eqs;
+                        GM_setValue(role + "_eqlist", eqlist);
+                        messageAppend("套装" + type + "保存成功!", 1);
+                        WG.remove_hook(this.eqx);
+                    }
+                });
+                WG.Send("pack");
+            } else {
+                eqlist = GM_getValue(role + "_eqlist", eqlist);
+                for (let i = 1; i < eqlist[type].length; i++) {
+                    if (eqlist[type][i] != null) {
+                        WG.Send("eq " + eqlist[type][i].id);
+                    }
 
+                }
+                if (eqlist[type][0] != null) {
+                    WG.Send("eq " + eqlist[type][0].id);
+                }
+                messageAppend("套装装备成功" + type + "!", 1);
+
+
+            }
+        },
+        eqhelperdel: function (type) {
+            eqlist = GM_getValue(role + "_eqlist", eqlist);
+            eqlist[type] = [];
+            GM_setValue(role + "_eqlist", eqlist);
+            messageAppend("清除套装" + type + "设置成功!", 1);
+        }
     };
     $(document).ready(function () {
         $('head').append('<link href="https://s1.pstatp.com/cdn/expire-1-y/jquery-contextmenu/2.6.3/jquery.contextMenu.min.css" rel="stylesheet">');
@@ -1700,6 +1763,48 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                         }
                     },
                 },
+                "换装设置": {
+                    name: "换装设置",
+                    "items": {
+                        "xx0": {
+                            name: "套装1设定或装备",
+                            callback: function (key, opt) {
+                                Helper.eqhelper(1);
+                            },
+                        },
+
+                        "xx1": {
+                            name: "清除套装1设置",
+                            callback: function (key, opt) {
+                                Helper.eqhelperdel(1);
+                            },
+                        },
+                        "yy0": {
+                            name: "套装2设定或装备",
+                            callback: function (key, opt) {
+                                Helper.eqhelper(2);
+                            },
+                        },
+                        "yy1": {
+                            name: "清除套装2设置",
+                            callback: function (key, opt) {
+                                Helper.eqhelperdel(2);
+                            },
+                        },
+                        "zz0": {
+                            name: "套装3设定或装备",
+                            callback: function (key, opt) {
+                                Helper.eqhelper(3);
+                            },
+                        },
+                        "zz1": {
+                            name: "清除套装3设置",
+                            callback: function (key, opt) {
+                                Helper.eqhelperdel(3);
+                            },
+                        },
+                    }
+                },
                 "手动喜宴": {
                     name: "手动喜宴",
                     callback: function (key, opt) {
@@ -1819,7 +1924,7 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                     visible: false,
                     callback: function (key, opt) {
                         Helper.kksBoss({
-                            "content": "听说xxx出现在峨眉派-走廊一带。"
+                            "content": "听说殇月出现在逍遥派-林间小道一带。"
                         });
                     },
                 },
