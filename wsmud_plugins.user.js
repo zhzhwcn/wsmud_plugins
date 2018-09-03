@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         wsmud_pluginss
 // @namespace    cqv1
-// @version      0.0.22.4
+// @version      0.0.22.9
 // @date         01/07/2018
 // @modified     27/08/2018
 // @homepage     https://greasyfork.org/zh-CN/scripts/371372
@@ -16,7 +16,7 @@
 // @grant        GM_getValue
 // @grant        GM_setValue
 // ==/UserScript==
-// 2018年8月31日09:12:23 更新: 优化婚宴礼桌选择 优化血量显示位置
+// 2018年9月1日10:08:31 优化师门任务
 (function () {
     'use strict';
     Array.prototype.baoremove = function (dx) {
@@ -738,7 +738,7 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
 <hiy>欢迎${role},插件已加载！第一次使用,请在设置中,初始化ID,并且设置一下是否自动婚宴,自动传送boss
 插件版本: ${GM_info.script.version}
 </hiy>`;
-                    }else{
+                    } else {
                         logintext = `
                         <hiy>欢迎${role},插件已加载！
                         插件版本: ${GM_info.script.version}
@@ -832,14 +832,22 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
             }, 1000);
         },
         Send: function (cmd) {
-            cmd = cmd.split(";");
-            for (var c of cmd) {
-                $("span[WG='WG']").attr("cmd", c).click();
-            };
+            if (cmd) {
+                cmd = cmd.split(";");
+                for (var c of cmd) {
+                    $("span[WG='WG']").attr("cmd", c).click();
+                };
+            }
         },
         go: function (p) {
-            if (WG.at(p)) return;
-            if (place[p] != undefined) WG.Send(place[p]);
+            if (needfind[p] == undefined) {
+                if (WG.at(p)) {
+                    return;
+                }
+            }
+            if (place[p] != undefined) {
+                WG.Send(place[p]);
+            }
         },
         at: function (p) {
             var w = $(".room-name").html();
@@ -882,9 +890,45 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                         return;
                     };
                     item = item.html();
+                    //(逗比写法)
                     //能上交直接上交
                     if ($("span[cmd$='giveup']:last").prev().children().html() == item) {
                         $("span[cmd$='giveup']:last").prev().click();
+                        messageAppend("自动上交" + item);
+                        WG.sm_state = 0;
+                        setTimeout(WG.sm, 100);
+                        return;
+                    }
+                    if ($("span[cmd$='giveup']:last").prev().prev().children().html() == item) {
+                        $("span[cmd$='giveup']:last").prev().prev().click();
+                        messageAppend("自动上交" + item);
+                        WG.sm_state = 0;
+                        setTimeout(WG.sm, 100);
+                        return;
+                    }
+                    if ($("span[cmd$='giveup']:last").prev().prev().prev().children().html() == item) {
+                        $("span[cmd$='giveup']:last").prev().prev().prev().click();
+                        messageAppend("自动上交" + item);
+                        WG.sm_state = 0;
+                        setTimeout(WG.sm, 100);
+                        return;
+                    }
+                    if ($("span[cmd$='giveup']:last").prev().prev().prev().prev().children().html() == item) {
+                        $("span[cmd$='giveup']:last").prev().prev().prev().prev().click();
+                        messageAppend("自动上交" + item);
+                        WG.sm_state = 0;
+                        setTimeout(WG.sm, 100);
+                        return;
+                    }
+                    if ($("span[cmd$='giveup']:last").prev().prev().prev().prev().prev().children().html() == item) {
+                        $("span[cmd$='giveup']:last").prev().prev().prev().prev().prev().click();
+                        messageAppend("自动上交" + item);
+                        WG.sm_state = 0;
+                        setTimeout(WG.sm, 100);
+                        return;
+                    }
+                    if ($("span[cmd$='giveup']:last").prev().prev().prev().prev().prev().prev().children().html() == item) {
+                        $("span[cmd$='giveup']:last").prev().prev().prev().prev().prev().prev().click();
                         messageAppend("自动上交" + item);
                         WG.sm_state = 0;
                         setTimeout(WG.sm, 100);
@@ -1136,7 +1180,7 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
         grove_auto: function () {
             if (timer == 0) {
                 this.needGrove = this.grove_ask_info();
-                if (this.needGrove) //如果返回的有内容  
+                if (this.needGrove) //如果返回的有内容
                 {
                     if (parseFloat(this.needGrove).toString() == "NaN") {
                         messageAppend("请输入数字");
@@ -1163,10 +1207,11 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
             messageClear();
             var html = `
 <div>
-<label>潜能计算器</label>
-<input type="number" id="c" placeholder="初始等级" style="width:30%" class="mui-input-speech"><br/>
-<input type="number" id="m" placeholder="目标等级" style="width:30%"><br/>
-<select id="se" style="width:30%">
+<div style="width:50%;float:left">
+<span>潜能计算器</span>
+<input type="number" id="c" placeholder="初始等级" style="width:50%" class="mui-input-speech"><br/>
+<input type="number" id="m" placeholder="目标等级" style="width:50%"><br/>
+<select id="se" style="width:50%">
 <option value='0'>选择技能颜色</option>
 <option value='1' style="color: #c0c0c0;">白色</option>
 <option value='2' style="color:#00ff00;">绿色</option>
@@ -1175,14 +1220,16 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
 <option value='5' style="color:#912cee;">紫色</option>
 <option value='6' style="color: #ffa600;">橙色</option>
 </select><br/>
-<input type="button" value="计算" style="width:30%"  id="qnjs"><br/>
-
-<label>开花计算器</label>
-<input type="number" id="nl" placeholder="当前内力" style="width:30%" class="mui-input-speech"><br/>
-<input type="number" id="xg" placeholder="先天根骨" style="width:30%"><br/>
-<input type="number" id="hg" placeholder="后天根骨" style="width:30%"><br/>
-<input type="button" value="计算" id = "kaihua" style="width:30%" class="mui-btn mui-btn-danger mui-btn-outlined"><br/>
+<input type="button" value="计算" style="width:50%"  id="qnjs"><br/>
+</div>
+<div style="width:50%;float:left">
+<span>开花计算器</span>
+<input type="number" id="nl" placeholder="当前内力" style="width:50%" class="mui-input-speech"><br/>
+<input type="number" id="xg" placeholder="先天根骨" style="width:50%"><br/>
+<input type="number" id="hg" placeholder="后天根骨" style="width:50%"><br/>
+<input type="button" value="计算" id = "kaihua" style="width:50%" <br/>
 <label>人花分值：5000  地花分值：6500  天花分值：8000</label>
+</div>
 
 </div>`;
             messageAppend(html);
@@ -1328,7 +1375,7 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
 
         gen: function (nl, xg, hg) {
             var jg = nl / 100 + xg * hg / 10;
-            var sd = formatCurrencyTenThou(jg);
+            var sd = this.formatCurrencyTenThou(jg);
             return sd;
         },
 
@@ -1337,7 +1384,7 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
             var jj = m - c;
             var jjc = jj / 2;
             var z = j * jjc * se * 5;
-            var sd = formatCurrencyTenThou(z);
+            var sd = this.formatCurrencyTenThou(z);
             return sd;
         },
 
@@ -1367,58 +1414,67 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
             var ks_pfm = GM_getValue(role + "_ks_pfm", ks_pfm);
             console.log("boss");
             console.log(boss_place);
-            if (autoKsBoss == "已开启") {
-                messageAppend("自动前往BOSS地点");
-                WG.Send("stopstate");
-                WG.go(boss_place);
-                this.ksboss = WG.add_hook(["items", "itemadd", "die"], function (data) {
-                    if (data.type == "items") {
-                        if (!WG.at(boss_place)) {
-                            return;
-                        }
-                        Helper.findboss(data, boss_name, function (bid) {
-                            if (bid != -1) {
+            messageAppend("自动前往BOSS地点");
+            WG.Send("stopstate");
+            WG.go(boss_place);
+            this.ksboss = WG.add_hook(["items", "itemadd", "die"], function (data) {
+                if (data.type == "items") {
+                    if (!WG.at(boss_place)) {
+                        return;
+                    }
+                    Helper.findboss(data, boss_name, function (bid) {
+                        if (bid != -1) {
+                            next = 999;
+                            setTimeout(() => {
+                                WG.Send("kill " + bid);
+                                //WG.Send("select " + bid);
                                 next = 0;
+                            }, Number(ks_pfm));
+                        } else {
+                            if (next == 999) {
+                                console.log('found');
+                                return;
+                            }
+                            let lj = needfind[boss_place];
+                            if (needfind[boss_place] != undefined && next < lj.length) {
                                 setTimeout(() => {
-                                    WG.Send("kill " + bid);
-                                }, Number(ks_pfm));
-                            } else {
-                                let lj = needfind[boss_place];
-                                if (needfind[boss_place] != undefined && next < lj.length) {
+                                    console.log(lj[next]);
                                     WG.Send(lj[next]);
                                     next++;
-                                } else {
-                                    console.log("not found");
-                                }
-                            }
-                        });
+                                }, 1000);
 
-                    }
-                    if (data.type == "itemadd") {
-                        if (data.name.indexOf(boss_name) >= 0) {
-                            next = 0;
-                            WG.get_all();
-                            console.log(this.index);
-                            WG.remove_hook(this.index);
+
+                            } else {
+                                console.log("not found");
+                            }
                         }
-                    }
-                    if (data.type == "die") {
+                    });
+
+                }
+                if (data.type == "itemadd") {
+                    if (data.name.indexOf(boss_name) >= 0) {
                         next = 0;
-                        WG.Send('relive');
+                        WG.get_all();
                         console.log(this.index);
                         WG.remove_hook(this.index);
                     }
-                    //WG.kill_all();
-                });
-                console.log(this.ksboss);
-                setTimeout(() => {
-                    console.log("复活挖矿");
-                    WG.Send('relive');
-                    WG.remove_hook(this.ksboss);
-                    WG.zdwk();
+                }
+                if (data.type == "die") {
                     next = 0;
-                }, 60000);
-            }
+                    WG.Send('relive');
+                    console.log(this.index);
+                    WG.remove_hook(this.index);
+                }
+            });
+            console.log(this.ksboss);
+            setTimeout(() => {
+                console.log("复活挖矿");
+                WG.Send('relive');
+                WG.remove_hook(this.ksboss);
+                WG.zdwk();
+                next = 0;
+            }, 60000);
+
         },
 
         xiyan: function () {
@@ -1429,13 +1485,15 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                 if (data.type == 'items') {
 
                     for (let idx = 0; idx < data.items.length; idx++) {
-                        if (data.items[idx].name.indexOf(">婚宴礼桌<")>=0){
-                            console.log("拾取");
-                            WG.Send('get all from ' + data.items[idx].id);
-                            console.log("xy" + this.index);
-                            WG.remove_hook(this.index);
+                        if (data.items[idx] != 0) {
+                            if (data.items[idx].name.indexOf(">婚宴礼桌<") >= 0) {
+                                console.log("拾取");
+                                WG.Send('get all from ' + data.items[idx].id);
+                                console.log("xy" + this.index);
+                                WG.remove_hook(this.index);
 
-                            break;
+                                break;
+                            }
                         }
                     }
                 } else if (data.type == 'text') {
@@ -1754,6 +1812,15 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                     callback: function (key, opt) {
                         WG.updete_goods_id();
                         WG.updete_npc_id();
+                    },
+                },
+                "调试BOSS": {
+                    name: "调试BOSS",
+                    visible: false,
+                    callback: function (key, opt) {
+                        Helper.kksBoss({
+                            "content": "听说xxx出现在峨眉派-走廊一带。"
+                        });
                     },
                 },
                 "设置": {
