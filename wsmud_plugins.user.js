@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         wsmud_pluginss
 // @namespace    cqv1
-// @version      0.0.23.4
+// @version      0.0.23.7
 // @date         01/07/2018
 // @modified     27/08/2018
 // @homepage     https://greasyfork.org/zh-CN/scripts/371372
@@ -16,7 +16,7 @@
 // @grant        GM_getValue
 // @grant        GM_setValue
 // ==/UserScript==
-// 2018年9月3日11:58:04 修复尸体显血
+// 2018年9月10 优化师门,增加武馆
 (function () {
     'use strict';
     Array.prototype.baoremove = function (dx) {
@@ -279,6 +279,7 @@
         "扬州城-擂台": "jh fam 0 start;go west;go south",
         "扬州城-当铺": "jh fam 0 start;go south;go east",
         "扬州城-帮派": "jh fam 0 start;go south;go south;go east",
+        "扬州城-扬州武馆": "jh fam 0 start;go south;go south;go west",
         "武当派-广场": "jh fam 1 start;",
         "武当派-三清殿": "jh fam 1 start;go north",
         "武当派-石阶": "jh fam 1 start;go west",
@@ -687,6 +688,10 @@
             place: "峨眉派-大殿",
             npc: "峨嵋派第四代弟子 静心"
         },
+        '武馆': {
+            place: "扬州城-扬州武馆",
+            npc: "武馆教习"
+    },
     };
     var WG = {
         sm_state: -1,
@@ -900,48 +905,18 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                     item = item.html();
                     //(逗比写法)
                     //能上交直接上交
-                    if ($("span[cmd$='giveup']:last").prev().children().html() == item) {
-                        $("span[cmd$='giveup']:last").prev().click();
-                        messageAppend("自动上交" + item);
-                        WG.sm_state = 0;
-                        setTimeout(WG.sm, 100);
-                        return;
+                    var tmpObj = $("span[cmd$='giveup']:last").prev();
+                    for(let i = 0 ;i <6 ;i++){
+                        if (tmpObj.children().html() == item) {
+                            tmpObj.click();
+                            messageAppend("自动上交" + item);
+                            WG.sm_state = 0;
+                            setTimeout(WG.sm, 100);
+                            return;
+                        }
+                        tmpObj = tmpObj.prev();
                     }
-                    if ($("span[cmd$='giveup']:last").prev().prev().children().html() == item) {
-                        $("span[cmd$='giveup']:last").prev().prev().click();
-                        messageAppend("自动上交" + item);
-                        WG.sm_state = 0;
-                        setTimeout(WG.sm, 100);
-                        return;
-                    }
-                    if ($("span[cmd$='giveup']:last").prev().prev().prev().children().html() == item) {
-                        $("span[cmd$='giveup']:last").prev().prev().prev().click();
-                        messageAppend("自动上交" + item);
-                        WG.sm_state = 0;
-                        setTimeout(WG.sm, 100);
-                        return;
-                    }
-                    if ($("span[cmd$='giveup']:last").prev().prev().prev().prev().children().html() == item) {
-                        $("span[cmd$='giveup']:last").prev().prev().prev().prev().click();
-                        messageAppend("自动上交" + item);
-                        WG.sm_state = 0;
-                        setTimeout(WG.sm, 100);
-                        return;
-                    }
-                    if ($("span[cmd$='giveup']:last").prev().prev().prev().prev().prev().children().html() == item) {
-                        $("span[cmd$='giveup']:last").prev().prev().prev().prev().prev().click();
-                        messageAppend("自动上交" + item);
-                        WG.sm_state = 0;
-                        setTimeout(WG.sm, 100);
-                        return;
-                    }
-                    if ($("span[cmd$='giveup']:last").prev().prev().prev().prev().prev().prev().children().html() == item) {
-                        $("span[cmd$='giveup']:last").prev().prev().prev().prev().prev().prev().click();
-                        messageAppend("自动上交" + item);
-                        WG.sm_state = 0;
-                        setTimeout(WG.sm, 100);
-                        return;
-                    }
+
                     //不能上交自动购买
                     WG.sm_item = goods[item];
                     if (WG.sm_item != undefined) {
@@ -1180,6 +1155,8 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
             if (this.needGrove == this.fbnum) {
                 messageAppend("<hiy>" + this.fbnum + "次副本小树林秒进秒退已完成</hiy>");
                 this.timer_close();
+                this.needGrove = 0;
+                this.fbnum = 0;
             }
         },
         grove_ask_info: function () {
@@ -1260,6 +1237,7 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
 <option value="峨眉">峨眉</option>
 <option value="逍遥">逍遥</option>
 <option value="丐帮">丐帮</option>
+<option value="武馆">武馆</option>
 </select>
 </span>
 <span><label for="wudao_pfm">武道自动攻击： </label><input style='width:80px' type="text" id="wudao_pfm" name="wudao_pfm" value="">
@@ -1450,8 +1428,8 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                             next = 999;
                             Helper.eqhelper(autoeq);
                             setTimeout(() => {
-                                //WG.Send("kill " + bid);
-                                WG.Send("select " + bid);
+                                WG.Send("kill " + bid);
+                                //WG.Send("select " + bid);
                                 next = 0;
                             }, Number(ks_pfm));
                         } else {
@@ -1899,9 +1877,9 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                             },
                         },
                         "mp6": {
-                            name: "襄阳",
+                            name: "武馆",
                             callback: function (key, opt) {
-                                WG.go("襄阳城-广场");
+                                WG.go("扬州城-扬州武馆");
                             },
                         }
                     },
