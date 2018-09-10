@@ -21,7 +21,7 @@
     'use strict';
     Array.prototype.baoremove = function (dx) {
         if (isNaN(dx) || dx > this.length) {
-            return false;
+            return false;az595902716
         }
         this.splice(dx, 1);
     }
