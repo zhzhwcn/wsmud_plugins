@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         wsmud_pluginss
 // @namespace    cqv1
-// @version      0.0.23.7
+// @version      0.0.23.10
 // @date         01/07/2018
 // @modified     27/08/2018
 // @homepage     https://greasyfork.org/zh-CN/scripts/371372
@@ -16,12 +16,12 @@
 // @grant        GM_getValue
 // @grant        GM_setValue
 // ==/UserScript==
-// 2018年9月10 优化师门,增加武馆
+// 2018年9月12 修复自动boss,优化挖矿
 (function () {
     'use strict';
     Array.prototype.baoremove = function (dx) {
         if (isNaN(dx) || dx > this.length) {
-            return false;az595902716
+            return false;
         }
         this.splice(dx, 1);
     }
@@ -375,7 +375,7 @@
         2: [],
         3: []
     };
-    var autoeq = 999;
+    var autoeq = 0;
     //快捷键功能
     var KEY = {
         keys: [],
@@ -1259,7 +1259,7 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
 </span>
 </span>
 <span><label for="auto_eq">BOSS击杀时自动换装： </label><select style='width:80px' id = "auto_eq">
-<option value="999">已停止</option>
+<option value="0">已停止</option>
 <option value="1">套装1</option>
 <option value="2">套装2</option>
 <option value="3">套装3</option>
@@ -1899,10 +1899,10 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                 },
                 "调试BOSS": {
                     name: "调试BOSS",
-                    visible: false,
+                    visible: true,
                     callback: function (key, opt) {
                         Helper.kksBoss({
-                            "content": "听说殇月出现在逍遥派-林间小道一带。"
+                            "content": "听说南陇侯出现在逍遥派-林间小道一带。"
                         });
                     },
                 },
