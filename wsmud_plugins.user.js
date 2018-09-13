@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         wsmud_pluginss
 // @namespace    cqv1
-// @version      0.0.23.11
+// @version      0.0.23.12
 // @date         01/07/2018
 // @modified     27/08/2018
 // @homepage     https://greasyfork.org/zh-CN/scripts/371372
@@ -17,6 +17,7 @@
 // @grant        GM_setValue
 // ==/UserScript==
 // 2018年9月13 优化提示内容
+// 2018年9月13 增加小号模式,自动放弃做不了的师门
 (function () {
     'use strict';
     Array.prototype.baoremove = function (dx) {
@@ -365,6 +366,7 @@
     };
     var role;
     var family = null;
+    var sm_loser = null;
     var wudao_pfm = "1";
     var ks_pfm = "2000";
     var automarry = null;
@@ -691,7 +693,7 @@
         '武馆': {
             place: "扬州城-扬州武馆",
             npc: "武馆教习"
-    },
+        },
     };
     var WG = {
         sm_state: -1,
@@ -738,6 +740,7 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                 family = $('.role-list .select').text().substr(0, 2);
             }
             wudao_pfm = GM_getValue(role + "_wudao_pfm", wudao_pfm);
+            sm_loser = GM_getValue(role + "_sm_loser", sm_loser);
             $(".sm_button").on("click", WG.sm_button);
             $(".go_yamen_task").on("click", WG.go_yamen_task);
             $(".kill_all").on("click", WG.kill_all);
@@ -868,7 +871,19 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
             var w = $(".room-name").html();
             return w.indexOf(p) == -1 ? false : true;
         },
+        smhook:null,
         sm: function () {
+            WG.smhook = WG.add_hook('text', function (data) {
+                if (data.msg.indexOf("辛苦了， 你先去休息") >= 0 ||
+                    data.msg.indexOf("和本门毫无瓜葛") >= 0||
+                    data.msg.indexOf("你没有") >= 0
+                ) {
+                    WG.sm_state = -1;
+                    $(".sm_button").text("师门(Q)");
+                    WG.remove_hook(WG.smhook);
+                }
+            });
+
             switch (WG.sm_state) {
                 case 0:
                     //前往师门接收任务
@@ -897,6 +912,7 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                     setTimeout(WG.sm, 300);
                     break;
                 case 2:
+                    var mysm_loser =  GM_getValue(role + "_sm_loser", sm_loser);
                     //获取师门任务物品
                     var item = $("span[cmd$='giveup']:last").parent().prev();
                     if (item.length == 0) {
@@ -908,7 +924,7 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                     //(逗比写法)
                     //能上交直接上交
                     var tmpObj = $("span[cmd$='giveup']:last").prev();
-                    for(let i = 0 ;i <6 ;i++){
+                    for (let i = 0; i < 6; i++) {
                         if (tmpObj.children().html() == item) {
                             tmpObj.click();
                             messageAppend("自动上交" + item);
@@ -928,8 +944,16 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                         setTimeout(WG.sm, 1000);
                     } else {
                         messageAppend("无法购买" + item);
-                        WG.sm_state = -1;
-                        $(".sm_button").text("师门(Q)");
+                        if (mysm_loser == '已停止') {
+                            WG.sm_state = -1;
+                            $(".sm_button").text("师门(Q)");
+                        } else {
+                            $("span[cmd$='giveup']:last").click();
+                            messageAppend("放弃任务");
+                            WG.sm_state = 0;
+                            setTimeout(WG.sm, 100);
+                            return;
+                        }
                     }
                     break;
                 case 3:
@@ -1242,6 +1266,11 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
 <option value="武馆">武馆</option>
 </select>
 </span>
+<span><label for="sm_loser">师门自动放弃： </label><select style='width:80px' id = "sm_loser">
+<option value="已停止">已停止</option>
+<option value="已开启">已开启</option>
+</select>
+</span>
 <span><label for="wudao_pfm">武道自动攻击： </label><input style='width:80px' type="text" id="wudao_pfm" name="wudao_pfm" value="">
 </span>
 <span><label for="marry_kiss">自动喜宴： </label><select style='width:80px' id = "marry_kiss">
@@ -1281,6 +1310,11 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
             $('#wudao_pfm').focusout(function () {
                 wudao_pfm = $('#wudao_pfm').val();
                 GM_setValue(role + "_wudao_pfm", wudao_pfm);
+            });
+            $('#sm_loser').val(sm_loser);
+            $('#sm_loser').focusout(function () {
+                sm_loser = $('#sm_loser').val();
+                GM_setValue(role + "_sm_loser", sm_loser);
             });
             $('#ks_pfm').val(ks_pfm);
             $('#ks_pfm').focusout(function () {
@@ -1616,6 +1650,7 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
             Helper.saveRoomstate(data);
             Helper.showallhp();
         });
+
         WG.add_hook("sc", function (data) {
             if ("hp" in data) {
                 roomData.forEach(function (v, k) {
