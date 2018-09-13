@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         wsmud_pluginss
 // @namespace    cqv1
-// @version      0.0.23.10
+// @version      0.0.23.11
 // @date         01/07/2018
 // @modified     27/08/2018
 // @homepage     https://greasyfork.org/zh-CN/scripts/371372
@@ -16,7 +16,7 @@
 // @grant        GM_getValue
 // @grant        GM_setValue
 // ==/UserScript==
-// 2018年9月12 修复自动boss,优化挖矿
+// 2018年9月13 优化提示内容
 (function () {
     'use strict';
     Array.prototype.baoremove = function (dx) {
@@ -760,7 +760,9 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                     }
                 } else {
                     logintext = `
-<hiy>欢迎${role},插件已加载！第一次使用,请在设置中,初始化ID,当前浏览器不支持自动喜宴自动boss,请使用火狐浏览器
+<hiy>欢迎${role},插件未正常加载！
+当前浏览器不支持自动喜宴自动boss,请使用火狐浏览器
+谷歌系浏览器,请在network中勾选disable cache,多刷新几次,直至提示已加载!
 插件版本: ${GM_info.script.version}
 </hiy>`;
                 }
