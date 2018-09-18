@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         wsmud_pluginss
 // @namespace    cqv1
-// @version      0.0.23.12
+// @version      0.0.23.14
 // @date         01/07/2018
 // @modified     27/08/2018
 // @homepage     https://greasyfork.org/zh-CN/scripts/371372
@@ -16,8 +16,7 @@
 // @grant        GM_getValue
 // @grant        GM_setValue
 // ==/UserScript==
-// 2018年9月13 优化提示内容
-// 2018年9月13 增加小号模式,自动放弃做不了的师门
+// 2018年9月13 一键脱装备
 (function () {
     'use strict';
     Array.prototype.baoremove = function (dx) {
@@ -1623,6 +1622,7 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                 eqlist = GM_getValue(role + "_eqlist", eqlist);
                 for (let i = 1; i < eqlist[type].length; i++) {
                     if (eqlist[type][i] != null) {
+                    
                         WG.Send("eq " + eqlist[type][i].id);
                     }
 
@@ -1640,7 +1640,21 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
             eqlist[type] = [];
             GM_setValue(role + "_eqlist", eqlist);
             messageAppend("清除套装" + type + "设置成功!", 1);
-        }
+        },
+        uneqall: function(){
+            this.eqx = WG.add_hook("dialog", (data) => {
+                if (data.dialog == "pack" && data.eqs != undefined) {
+                    for(let i = 0; i<data.eqs.length;i++){
+                        if(data.eqs[i]!=null){
+                            WG.Send("uneq "+data.eqs[i].id);
+                        }
+                    }
+                    WG.remove_hook(this.eqx);
+                }
+            });
+            WG.Send("pack");
+            messageAppend("取消所有装备成功!",1);
+        },
     };
     $(document).ready(function () {
         $('head').append('<link href="https://s1.pstatp.com/cdn/expire-1-y/jquery-contextmenu/2.6.3/jquery.contextMenu.min.css" rel="stylesheet">');
@@ -1818,6 +1832,12 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                                 Helper.eqhelperdel(3);
                             },
                         },
+                        "uneq": {
+                            name: "取消所有装备",
+                            callback: function (key, opt) {
+                                Helper.uneqall();
+                            },
+                        },
                     }
                 },
                 "手动喜宴": {
@@ -1936,7 +1956,7 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                 },
                 "调试BOSS": {
                     name: "调试BOSS",
-                    visible: true,
+                    visible: false,
                     callback: function (key, opt) {
                         Helper.kksBoss({
                             "content": "听说南陇侯出现在逍遥派-林间小道一带。"
