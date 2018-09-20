@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         wsmud_pluginss
 // @namespace    cqv1
-// @version      0.0.23.14
+// @version      0.0.23.19
 // @date         01/07/2018
 // @modified     27/08/2018
 // @homepage     https://greasyfork.org/zh-CN/scripts/371372
@@ -16,7 +16,7 @@
 // @grant        GM_getValue
 // @grant        GM_setValue
 // ==/UserScript==
-// 2018年9月13 一键脱装备
+// 2018年9月20 武庙疗伤
 (function () {
     'use strict';
     Array.prototype.baoremove = function (dx) {
@@ -280,6 +280,7 @@
         "扬州城-当铺": "jh fam 0 start;go south;go east",
         "扬州城-帮派": "jh fam 0 start;go south;go south;go east",
         "扬州城-扬州武馆": "jh fam 0 start;go south;go south;go west",
+        "扬州城-武庙": "jh fam 0 start;go north;go north;go west",
         "武当派-广场": "jh fam 1 start;",
         "武当派-三清殿": "jh fam 1 start;go north",
         "武当派-石阶": "jh fam 1 start;go west",
@@ -723,6 +724,7 @@ text-align: center;cursor: pointer;border-radius: 0.25em;min-width: 2.5em;margin
 margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;line-height: 2em;}
 .WG_log{flex: 1;overflow-y: auto;border: 1px solid #404000;max-height: 15em;width: calc(100% - 40px);}
 .WG_log > pre{margin: 0px; white-space: pre-line;}
+.item-plushp{display: inline-block;float: right;width: 100px;}
 `;
             GM_addStyle(css);
             goods = GM_getValue("goods", goods);
@@ -748,6 +750,7 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
             $(".zdwk").on("click", WG.zdwk);
             setTimeout(() => {
                 var logintext = '';
+                document.title = role+"-MUD游戏-武神传说";
                 if (WebSocket) {
                     if (npcs['店小二'] == 0) {
                         logintext = `
@@ -1269,6 +1272,7 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
 <option value="已停止">已停止</option>
 <option value="已开启">已开启</option>
 </select>
+
 </span>
 <span><label for="wudao_pfm">武道自动攻击： </label><input style='width:80px' type="text" id="wudao_pfm" name="wudao_pfm" value="">
 </span>
@@ -1590,10 +1594,9 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                 roomData.forEach(function (v, k) {
                     if (v != 0) {
                         if (v.hp) {
-                            $(".plushp[itemid=" + v.id + "]").remove();
-                            $("[itemid=" + v.id + "]").after("<label class='plushp' " +
-                                "itemid='" + v.id + "'style='margin-left:30px;    margin-top: -16px; '>血量:" +
-                                v.hp + "/" + v.max_hp + "</label>")
+                            $(".item-plushp[itemid=" + v.id + "]").remove();
+                            $("[itemid=" + v.id + "] .item-status").after("<span class='item-plushp' itemid='"+v.id+"'></span>").next();
+                            $(".item-plushp[itemid=" + v.id + "]").html("<hig>hp:" + v.hp + "(" + Math.floor(v.hp / v.max_hp * 100) + "%)</hig>");
                         }
                     }
                 });
@@ -1890,6 +1893,13 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                             name: "药铺",
                             callback: function (key, opt) {
                                 WG.go("扬州城-药铺");
+                            },
+                        },
+                        "mp7": {
+                            name: "武庙疗伤",
+                            callback: function (key, opt) {
+                                WG.go("扬州城-武庙");
+                                WG.Send("liaoshang");
                             },
                         }
                     },
