@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         wsmud_pluginss
 // @namespace    cqv1
-// @version      0.0.23.19
+// @version      0.0.23.21
 // @date         01/07/2018
 // @modified     27/08/2018
 // @homepage     https://greasyfork.org/zh-CN/scripts/371372
@@ -16,7 +16,8 @@
 // @grant        GM_getValue
 // @grant        GM_setValue
 // ==/UserScript==
-// 2018年9月20 武庙疗伤
+// 2018年9月20 背包整合原作者 fjcqv
+
 (function () {
     'use strict';
     Array.prototype.baoremove = function (dx) {
@@ -102,6 +103,8 @@
     var zb_place;
     var next = 0;
     var roomData = [];
+
+   
     var needfind = {
         "武当派-林间小径": ["go south"],
         "峨眉派-走廊": ["go north", "go south;go south", "go north;go east;go east"],
@@ -111,7 +114,52 @@
         "逍遥派-地下石室": ["go up"],
         "逍遥派-木屋": ["go south;go south;go south;go south"]
     };
-
+    var store_list= [
+        "<hic>红宝石</hic>",
+        "<hic>黄宝石</hic>",
+        "<hic>蓝宝石</hic>",
+        "<hic>绿宝石</hic>",
+        "<hiy>精致的红宝石</hiy>",
+        "<hiy>精致的黄宝石</hiy>",
+        "<hiy>精致的蓝宝石</hiy>",
+        "<hiy>精致的红宝石</hiy>",
+        "<hiz>完美的黄宝石</hiz>",
+        "<hiz>完美的黄宝石</hiz>",
+        "<hiz>完美的蓝宝石</hiz>",
+        "<hiz>完美的绿宝石</hiz>",
+        "<wht>基本内功秘籍</wht>",
+        "<wht>基本轻功秘籍</wht>",
+        "<wht>基本招架秘籍</wht>",
+        "<wht>基本剑法秘籍</wht>",
+        "<wht>基本刀法秘籍</wht>",
+        "<wht>基本拳脚秘籍</wht>",
+        "<wht>基本暗器秘籍</wht>",
+        "<wht>基本棍法秘籍</wht>",
+        "<wht>基本鞭法秘籍</wht>",
+        "<wht>基本杖法秘籍</wht>",
+        "<wht>动物皮毛</wht>",
+        "<wht>家丁服</wht>",
+        "<wht>家丁鞋</wht>",
+        "<hig>五虎断门刀残页</hig>",
+        "<hig>太祖长拳残页</hig>",
+        "<hig>流氓巾</hig>",
+        "<hig>流氓衣</hig>",
+        "<hig>流氓鞋</hig>",
+        "<hig>流氓护腕</hig>",
+        "<hig>流氓短剑</hig>",
+        "<hig>流氓闷棍</hig>",
+        "<hig>军服</hig>",
+        "<hig>官服</hig>",
+        "<hic>崔莺莺的手镯</hic>",
+        "<hig>崔员外的戒指</hig>",
+        "<hig>黑虎单刀</hig>",
+        "<hig>员外披肩</hig>",
+        "<hig>短衣劲装</hig>",
+        "进阶残页",
+        "聚气丹",
+        "师门令牌",
+        "喜宴",
+    ];
     var goods = {
         //扬州城-醉仙楼-店小二
         "米饭": {
@@ -364,6 +412,9 @@
         "襄阳城-广场": "jh fam 7 start",
         "武道塔": "jh fam 8 start"
     };
+    var drop_list= [];
+    var fenjie_list= [];
+    
     var role;
     var family = null;
     var sm_loser = null;
@@ -703,6 +754,20 @@
                 WG.login();
             });
         },
+        inArray: function (val, arr) {
+            for (let i = 0; i < arr.length; i++) {
+                let item = arr[i];
+                if (item[0] == "<") {
+                    if (item == val) return true;
+
+                }
+                else {
+                    if (val.indexOf(item) >= 0) return true;
+                }
+            }
+            return false;
+
+        },
         login: function () {
             role = $('.role-list .select').text().split(/[\s\n]/).pop();
             $(".bottom-bar").append("<span class='item-commands' style='display:none'><span WG='WG' cmd=''></span></span>"); //命令行模块
@@ -746,7 +811,7 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
             $(".go_yamen_task").on("click", WG.go_yamen_task);
             $(".kill_all").on("click", WG.kill_all);
             $(".get_all").on("click", WG.get_all);
-            $(".sell_all").on("click", WG.sell_all);
+            $(".sell_all").on("click", WG.clean_all);
             $(".zdwk").on("click", WG.zdwk);
             setTimeout(() => {
                 var logintext = '';
@@ -853,7 +918,7 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
         },
         Send: function (cmd) {
             if (cmd) {
-                cmd = cmd.split(";");
+                cmd = cmd instanceof Array ? cmd : cmd.split(';');
                 for (var c of cmd) {
                     $("span[WG='WG']").attr("cmd", c).click();
                 };
@@ -1062,10 +1127,103 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                 WG.Send("get all from " + $(npc).attr("itemid"));
             }
         },
-
-        sell_all: function () {
+        clean_all: function () {
             WG.go("扬州城-打铁铺");
             WG.Send("sell all");
+        },
+        packup_listener:null,
+        sell_all: function () {
+            if (WG.packup_listener) {
+                messageAppend("<hio>包裹整理</hio>运行中");
+                return;
+            }
+            let stores = [];
+            WG.packup_listener = WG.add_hook(["dialog", "text"], (data) => {
+                if (data.type == "dialog" && data.dialog == "list") {
+                    if (data.stores == undefined) {
+                        return;
+                    }
+                    stores = [];
+                    //去重
+                    for (let i = 0; i < data.stores.length; i++) {
+                        let s = null;
+                        for (let j = 0; j < stores.length; j++) {
+                            if (stores[j].name == data.stores[i].name) {
+                                s = stores[j]; break;
+                            }
+                        }
+                        if (s != null) {
+                            s.count += data.stores[i].count;
+                        }
+                        else {
+                            stores.push(data.stores[i]);
+                        }
+                    }
+
+                } else if (data.type == "dialog" && data.dialog == "pack") {
+                    let cmds = [];
+                    for (var i = 0; i < data.items.length; i++) {
+                        //仓库
+                        if (WG.inArray(data.items[i].name, store_list)) {
+                            if (data.items[i].can_eq) {
+                                //装备物品，不能叠加，计算总数
+                                let store = null;
+                                for (let j = 0; j < stores.length; j++) {
+                                    if (stores[j].name == data.items[i].name) {
+                                        store = stores[j]; break;
+                                    }
+                                }
+                                if (store != null) {
+                                    if (store.count < 4) {
+                                        store.count += data.items[i].count;
+                                        cmds.push("store " + data.items[i].count + " " + data.items[i].id);
+                                        messageAppend("<hio>包裹整理</hio>" + data.items[i].name + "储存到仓库");
+                                    }
+                                    else {
+                                        messageAppend("<hio>包裹整理</hio>" + data.items[i].name + "超过设置的储存上限");
+                                    }
+                                }
+                                else {
+                                    stores.push(data.items[i]);
+                                    cmds.push("store " + data.items[i].count + " " + data.items[i].id);
+                                    messageAppend("<hio>包裹整理</hio>" + data.items[i].name + "储存到仓库");
+                                }
+                            }
+                            else {
+                                cmds.push("store " + data.items[i].count + " " + data.items[i].id);
+                                messageAppend("<hio>包裹整理</hio>" + data.items[i].name + "储存到仓库");
+                            }
+                        }
+                        //丢弃
+                        if (WG.inArray(data.items[i].name, drop_list)) {
+                            cmds.push("drop " + data.items[i].count + " " + data.items[i].id);
+                            messageAppend("<hio>包裹整理</hio>" + data.items[i].name + "丢弃");
+
+                        }
+                        //分解
+                        if (WG.inArray(data.items[i].name, fenjie_list)) {
+                            cmds.push("fenjie " + data.items[i].id);
+                            messageAppend("<hio>包裹整理</hio>" + data.items[i].name + "分解");
+
+                        }
+                    }
+                    if (cmds.length > 0) {
+                        WG.Send(cmds);
+                    }
+                    WG.go("扬州城-杂货铺");
+                    WG.Send("sell all");
+                    WG.Send("look3 1");
+                }
+                else if (data.type == 'text' && data.msg == '没有这个玩家。') {
+                    messageAppend("<hio>包裹整理</hio>完成");
+                    WG.remove_hook(WG.packup_listener);
+                    WG.packup_listener = undefined;
+                }
+            });
+
+            messageAppend("<hio>包裹整理</hio>开始");
+            WG.go("仓库");
+            WG.Send("store;pack");
         },
         zdwk: function () {
             var t = $(".room_items .room-item:first .item-name").text();
@@ -1791,6 +1949,12 @@ margin-left: 0.4em;position: relative;padding-left: 0.4em;padding-right: 0.4em;l
                             name: "自动小树林",
                             callback: function (key, opt) {
                                 WG.grove_auto();
+                            }
+                        },
+                        "自动整理并清包": {
+                            name: "自动整理并清包",
+                            callback: function (key, opt) {
+                                WG.sell_all();
                             }
                         }
                     },
