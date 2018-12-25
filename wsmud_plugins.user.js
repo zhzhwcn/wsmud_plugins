@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         wsmud_pluginss
 // @namespace    cqv1
-// @version      0.0.30.01
+// @version      0.0.30.09
 // @date         01/07/2018
 // @modified     23/10/2018
 // @homepage     https://greasyfork.org/zh-CN/scripts/371372
@@ -22,7 +22,7 @@
 
 (function () {
     'use strict';
-    var updateinfo = "整合Bob.cn的自动移花脚本,请前往右键->自动菜单中运行 \n支付宝搜索 9214712 领大额线下花呗红包";
+    var updateinfo = "增加:自定义状态监控功能,右键->自定义监控 开启,使用本功能需要一些基础知识,不知道的就别用了. \n支付宝搜索 9214712 领大额线下花呗红包";
 
     Array.prototype.baoremove = function (dx) {
         if (isNaN(dx) || dx > this.length) {
@@ -33,7 +33,7 @@
 
     if (WebSocket) {
         console.log('插件可正常运行,Plugins can run normally');
-        
+
         var _ws = WebSocket,
             ws, ws_on_message;
         unsafeWindow.WebSocket = function (uri) {
@@ -101,6 +101,7 @@
     } else {
         console.log("插件不可运行,请打开'https://greasyfork.org/zh-CN/forum/discussion/41547/x',按照操作步骤进行操作,Plugins are not functioning properly.plase open https://greasyfork.org/zh-CN/forum/discussion/41547/x");
     }
+
     var roomItemSelectIndex = -1;
     var timer = 0;
     var cnt = 0;
@@ -441,6 +442,9 @@
     var zml = [];
     //自定义存取
     var zdy_item_store = '';
+    //状态监控 type 类型 0 =其他人 1= 本人 send 命令数组
+    //[{"name":"","type":"status","action":"remove","keyword":"busy","ishave":"0","send":""}]
+    var ztjk_item =[];
     //快捷键功能
     var KEY = {
         keys: [],
@@ -823,6 +827,7 @@
             zml = GM_getValue(role + "_zml", zml);
             //自定义存储
             zdy_item_store = GM_getValue(role + "_zdy_item_store", zdy_item_store);
+            ztjk_item = GM_getValue(role+"_ztjk",ztjk_item);
             if (auto_pfmswitch == '已开启') {
                 G.auto_preform = true;
             }
@@ -831,7 +836,7 @@
                 if (pfmname)
                     blackpfm.push(pfmname);
             }
-            if (zdy_item_store){
+            if (zdy_item_store) {
                 store_list = store_list.concat(zdy_item_store.split(","));
             }
             $(".sm_button").on("click", WG.sm_button);
@@ -841,12 +846,12 @@
             $(".sell_all").on("click", WG.clean_all);
             $(".zdwk").on("click", WG.zdwk);
             $(".auto_perform").on("click", WG.auto_preform_switch);
-            
+
             setTimeout(() => {
                 role = role;
                 var logintext = '';
                 document.title = role + "-MUD游戏-武神传说";
-                
+
                 KEY.do_command("showtool");
                 KEY.do_command("pack");
                 KEY.do_command("score");
@@ -857,6 +862,7 @@
                         rolep = G.level + role;
                     }
                     if (WebSocket) {
+                       
                         if (npcs['店小二'] == 0) {
                             logintext = `
 <hiy>欢迎${rolep},插件已加载！第一次使用,请在设置中,初始化ID,并且设置一下是否自动婚宴,自动传送boss
@@ -869,6 +875,7 @@
                         更新日志: ${updateinfo}
                         </hiy>`;
                         }
+                        Helper.ztjk_func();
                     } else {
                         logintext = `
 <hiy>欢迎${role},插件未正常加载！
@@ -988,6 +995,14 @@
         sleep: function (time) {
             return new Promise((resolve) => setTimeout(resolve, time));
         },
+        stopAllAuto: function () {
+            automarry = "已停止";
+            autoKsBoss = "已停止";
+        },
+        reSetAllAuto: function () {
+            automarry = GM_getValue(role + "_automarry", "已停止");
+            autoKsBoss = GM_getValue(role + "_autoKsBoss", "已停止");;
+        },
         go: async function (p) {
             if (needfind[p] == undefined) {
                 if (WG.at(p)) {
@@ -1043,7 +1058,7 @@
                             }
                         } else {
                             if (npc.lastElementChild.lastElementChild == null) {
-                                if (npc.lastElementChild.innerText == sm_array[family].npc){
+                                if (npc.lastElementChild.innerText == sm_array[family].npc) {
                                     id = $(npc).attr("itemid");
                                 }
                             }
@@ -1457,11 +1472,11 @@
         grove_ask_info: function () {
             return prompt("请输入需要秒进秒退的副本次数", "");
         },
-        grove_auto: function (needG=null) {
+        grove_auto: function (needG = null) {
             if (timer == 0) {
-                if (needG==null){
-                this.needGrove = this.grove_ask_info();
-                }else{
+                if (needG == null) {
+                    this.needGrove = this.grove_ask_info();
+                } else {
                     this.needGrove = needG;
                 }
                 if (this.needGrove) //如果返回的有内容
@@ -1564,8 +1579,8 @@
 <span><label for="ks_pfm">叫杀延时(ms)： </label><input style='width:80px' type="text" id="ks_pfm" name="ks_pfm" value="">
 </span>
 <span> <label for = "autopfmswitch" > 自动施法开关： </label><select style = 'width:80px' id = "autopfmswitch" >
-    <option value = "已停止" > 已停止 </option> 
-    <option value = "已开启" > 已开启 </option> 
+    <option value = "已停止" > 已停止 </option>
+    <option value = "已开启" > 已开启 </option>
     </select>
 </span>
 <span><label for = "unautopfm" > 自动施法黑名单(使用半角逗号分隔)： </label>
@@ -1633,11 +1648,11 @@
                 }
             });
             $('#store_info').val(zdy_item_store);
-            $('#store_info').change(function(){
-                 zdy_item_store = $('#store_info').val();
+            $('#store_info').change(function () {
+                zdy_item_store = $('#store_info').val();
 
-                 GM_setValue(role + "_zdy_item_store", zdy_item_store);
-                 store_list = store_list.concat(zdy_item_store.split(","));
+                GM_setValue(role + "_zdy_item_store", zdy_item_store);
+                store_list = store_list.concat(zdy_item_store.split(","));
             })
             $(".updete_id_all").on("click", WG.updete_id_all);
         },
@@ -1669,7 +1684,7 @@
                 // }
                 var listener = this.hooks[i];
                 if (listener.types == data.type || (listener.types instanceof Array && $
-                        .inArray(data.type, listener.types) >= 0)) {
+                    .inArray(data.type, listener.types) >= 0)) {
                     listener.fn(data);
                 }
             }
@@ -1963,7 +1978,7 @@
             if (id == null) return;
             Helper.fight_listener = WG.add_hook(["sc", "combat"], function (data) {
                 if (data.type == "combat" && data.end) {
-                    Helper.recover(1, 1, 0, function () {});
+                    Helper.recover(1, 1, 0, function () { });
                 } else if (data.type == "sc" && data.id == id) {
                     let item = G.items.get(id);
                     if (item.hp >= item.max_hp) {
@@ -2161,6 +2176,7 @@
             messageClear();
             var a = `<div style='text-align:right;width:280px'>
             <div class = "item-commands" > <span class = "editzml" > 编辑自命令 </span> </div>
+            <div class = "item-commands" > <span class = "editztjk" > 编辑自定义监控 </span> </div>
             <div class = "item-commands"  id = "zml_show"></div>
 
             </div>`;
@@ -2179,6 +2195,9 @@
 
             $(".editzml").on("click", function () {
                 Helper.zml_edit();
+            });
+            $(".editztjk").on("click", function () {
+                Helper.ztjk_edit();
             });
 
         },
@@ -2221,58 +2240,138 @@
                 });
             });
         },
-        daily_hook:undefined,
-        oneKeyDaily: function(){
-            messageAppend("本脚本会自动执行师门及自动进退小树林,请确保精力足够再执行",1);
+        ztjk_edit: function () {
+
+     //[{"name":"","type":"state","action":"remove","keyword":"busy","ishave":"0","send":""}]
+            ztjk_item = GM_getValue(role + "_ztjk", ztjk_item);
+            messageClear();
+            var edithtml = `<div style='text-align:right;width:280px'>
+            <span><label> 本功能支持status(状态) 监控 以及 text(文本) 监控,文本监控可以不用输入action</label></span>
+<span><label for="ztjk_name"> 名称:</label></span><input id ="ztjk_name" style='width:80px' type="text"  name="ztjk_name" value="">
+<span><label for="ztjk_type"> 类型(type):</label></span><input id ="ztjk_type" style='width:80px' type="text"  name="ztjk_type" value="status">
+<span><label for="ztjk_action"> 动作(action):</label></span><input id ="ztjk_action" style='width:80px' type="text"  name="ztjk_action" value="">
+<span><label for="ztjk_keyword"> 关键字(sid):</label></span><input id ="ztjk_keyword" style='width:80px' type="text"  name="ztjk_keyword" value="">
+<label for = "ztjk_ishave" > 触发对象: </label><select style = 'width:80px' id = "ztjk_ishave" >
+    <option value = "0" > 其他人 </option>
+    <option value = "1" > 本人 </option>
+    </select>
+
+<span><label for="ztjk_send"> 输入自定义命令(用半角分号(;)分隔):</label></span>
+ <textarea class = "settingbox hide"style = "display: inline-block;"id = 'ztjk_send'></textarea>
+<div class = "item-commands" > <span class = "ztjk_editadd" > 添加 </span> </div>
+<div class = "item-commands"  id = "ztjk_show"></div>
+</div> `
+            messageAppend(edithtml);
+            $('.ztjk_editadd').on("click",function(){
+                var ztjk = {name:$('#ztjk_name').val(),
+                    type: $('#ztjk_type').val(),
+                    action: $('#ztjk_action').val(),
+                    keyword: $('#ztjk_keyword').val(),
+                    ishave: $('#ztjk_ishave').val(),
+                    send: $('#ztjk_send').val()
+                    };
+                    ztjk_item.push(ztjk);
+                GM_setValue(role+"_ztjk", ztjk_item);
+                Helper.ztjk_func();
+            });
+            ztjk_item.forEach(function (v, k) {
+                var btn = "<span class='addrun" + k + "'>删除" + v.name + "</span>";
+                $('#ztjk_show').append(btn);
+
+            });
+            ztjk_item.forEach(function (v, k) {
+                $(".addrun" + k).on("click", function () {
+                    ztjk_item.baoremove(k);
+                    GM_setValue(role + "_ztjk", ztjk_item);
+                    Helper.ztjk_edit();
+                    messageAppend("删除成功", 2);
+                Helper.ztjk_func();
+                });
+            });
+
+        },
+        ztjk_hook:undefined,
+        ztjk_func :function(){
+            if (Helper.ztjk_hook) {
+                WG.remove_hook(Helper.ztjk_hook);
+            }
+            Helper.ztjk_hook = undefined;
+            ztjk_item = GM_getValue(role + "_ztjk", ztjk_item);
+            Helper.ztjk_hook = WG.add_hook(["status","text"], function (data) {
+                    ztjk_item.forEach(function(v,k){
+                        if(data.type == "status"){
+                            if (v.action == data.action && v.keyword == data.sid) {
+                                if (v.ishave == "0" && data.id != G.id){
+                                    messageAppend("已触发"+v.name,1);
+                                    WG.Send(v.send);
+                                } else if (v.ishave == "1" && data.id==G.id){
+                                    messageAppend("已触发" + v.name, 1);
+                                    WG.Send(v.send);
+                                }
+                            }
+                        }else if (data.type =="text"){
+                            if(data.msg.indexOf(v.keyword)>=0){
+                                WG.Send(v.send);
+                            }
+                        }
+                    });
+
+                });
+            messageAppend("已注入自动监控");
+        },
+        daily_hook: undefined,
+        oneKeyDaily: function () {
+            messageAppend("本脚本会自动执行师门及自动进退小树林,请确保精力足够再执行", 1);
             Helper.daily_hook = WG.add_hook("dialog", async function (data) {
-                if (data.dialog == "tasks"){
-                    if(data.items){
-                        let dailylog =  data.items[1].desc;
+                if (data.dialog == "tasks") {
+                    if (data.items) {
+                        let dailylog = data.items[1].desc;
                         let dailystate = data.items[1].state;
-                        if(dailystate==3){
-                            messageAppend("日常已完成",1);
+                        if (dailystate == 3) {
+                            messageAppend("日常已完成", 1);
                             WG.zdwk();
                             WG.remove_hook(Helper.daily_hook);
-                            Helper.daily_hook=undefined;
-                        }else{
+                            Helper.daily_hook = undefined;
+                        } else {
                             let str = dailylog;
                             str = str.replace(/<(?!\/?p\b)[^>]+>/ig, '');
                             let str1 = str.split("副本");
 
                             let n = str1[0].match("：([^%]+)/20")[1];
                             let n1 = str1[1].match("：([^%]+)/20")[1];
-                             n = 20 - parseInt(n);
-                             n1 = 20 - parseInt(n1);
-                            messageAppend("还需要" + n + "次师门任务," +n1 + "次副本,才可签到");
-                            if(n!=0){
+                            n = 20 - parseInt(n);
+                            n1 = 20 - parseInt(n1);
+                            messageAppend("还需要" + n + "次师门任务," + n1 + "次副本,才可签到");
+                            if (n != 0) {
                                 $(".sm_button").click();
                             }
                             await WG.sleep(2000);
                             while ($(".sm_button").text().indexOf("停止") >= 0) {
                                 await WG.sleep(2000);
                             }
-                            
+
                             WG.grove_auto(n1);
                             WG.remove_hook(Helper.daily_hook);
-                            Helper.daily_hook = undefined;  
+                            Helper.daily_hook = undefined;
                         }
 
                     }
-            }});
+                }
+            });
             WG.Send("stopstate");
             KEY.do_command("tasks");
             KEY.do_command("tasks");
         },
         sd_hook: undefined,
         oneKeySD: function () {
-            if (!npcs["扬州知府 程药发"]){
+            if (!npcs["扬州知府 程药发"]) {
                 messageAppend("请先初始化ID");
                 return;
             }
             messageAppend("本脚本自动执行购买扫荡符,进行追捕扫荡,请确保元宝足够\n注意! 超过上限会自动放弃", 1);
-            Helper.sd_hook = WG.add_hook(["dialog","text"], async function (data) {
+            Helper.sd_hook = WG.add_hook(["dialog", "text"], async function (data) {
                 if (data.type = 'text' && data.msg) {
-                    if (data.msg.indexOf("无法快速完")>=0){
+                    if (data.msg.indexOf("无法快速完") >= 0) {
                         WG.Send("ask1 " + npcs["扬州知府 程药发"]);
                         await WG.sleep(2000);
                         WG.Send("ask2 " + npcs["扬州知府 程药发"]);
@@ -2289,7 +2388,7 @@
                         let str = data.msg;
                         str = str.replace(/<(?!\/?p\b)[^>]+>/ig, '');
                         let n = str.match("目前完成([^%]+)/20")[1];
-                        if(n=="20"){
+                        if (n == "20") {
                             messageAppend("追捕已完成", 1);
                             await WG.sleep(2000);
                             WG.zdwk();
@@ -2301,22 +2400,22 @@
                 if (data.dialog == "tasks") {
                     if (data.items) {
                         let dailylog = data.items[3].desc;
-                       
+
                         let str = dailylog;
                         str = str.replace(/<(?!\/?p\b)[^>]+>/ig, '');
 
                         let n = str.match("完成([^%]+)/20")[1];
                         n = 20 - parseInt(n);
-                        if (n==0) {
+                        if (n == 0) {
                             messageAppend("追捕已完成", 1);
                             WG.zdwk();
                             WG.remove_hook(Helper.sd_hook);
                             Helper.sd_hook = undefined;
                             return;
-                        } else{
-                            messageAppend("还需要" + n + "次扫荡,自动购入"+n+"张扫荡符" );
+                        } else {
+                            messageAppend("还需要" + n + "次扫荡,自动购入" + n + "张扫荡符");
                             await WG.sleep(2000);
-                            WG.Send("shop 0 "+n);
+                            WG.Send("shop 0 " + n);
                             WG.go("扬州城-衙门正厅");
                             await WG.sleep(2000);
                             WG.Send("ask3 " + npcs["扬州知府 程药发"]);
@@ -2335,451 +2434,7 @@
 
     };
     //副本部分 author  bob.cn
-        var Role = {
-            id: undefined,
-            status: [],
 
-            init: function () {
-                WG.add_hook("login", function (data) {
-                    Role.id = data.id;
-                    Role.status = [];
-                });
-                WG.add_hook("status", function (data) {
-                    if (data.id != Role.id) return;
-                    if (data.action == "add") {
-                        Role.status.push(data.sid);
-                    } else if (data.action == "remove") {
-                        let index = Role.status.indexOf(data.sid);
-                        if (index == -1) return;
-                        Role.status.splice(index, 1);
-                    }
-                });
-            },
-            isStatus: function (s) {
-                return Role.status.indexOf(s) != -1;
-            }
-        };
-
-        var Raid = {
-
-            /* public */
-
-            name: "副本名称",
-            cmds: [],
-            enemyNames: [],
-
-            willStartRun: undefined, // optional: function()
-            didEndRun: undefined, // optional: function()
-
-            willStartOnceRun: undefined, // optional: function(number)
-            didEndOnceRun: undefined, // optional: function(number)
-
-            willExecuteCmd: undefined, // optional: function(lastCmd, cmd)
-            didExecuteCmd: undefined, // optional: function(cmd)
-
-            repeatRun: function () {
-                let num = prompt("输入扫荡【" + Raid.name + "】副本次数,例如:\"1\"", '1');
-                if (num > 0) {
-                    Raid._repeatTotal = num;
-                    Raid._repeatCounter = 0;
-                }
-
-                Raid._cleanRepeatRun();
-
-                if (Raid.willStartRun) {
-                    Raid.willStartRun();
-                }
-
-                Raid._indexes.push(Raid._monitorEnemy());
-                Raid._indexes.push(Raid._monitorEnemyDie());
-
-                Raid._once_run();
-            },
-
-            /* private */
-
-            _indexes: [],
-            _repeatTotal: 1,
-            _repeatCounter: 0,
-
-            _cmdIndex: 0, // 下一条执行的命令的索引
-            _lastCmd: undefined, // 上一个执行的命令
-
-            _enemyIds: undefined, // 当前房间的敌人id
-            _enemyCounter: 0, // 当前房间剩余的敌人
-
-            _once_run: function () {
-                Raid._cleanForOnceRun();
-
-                if (Raid.willStartOnceRun) {
-                    Raid.willStartOnceRun(Raid._repeatCounter);
-                }
-
-                Raid._executeCmd();
-            },
-            _cleanRepeatRun: function () {
-                for (var i = Raid._indexes.length - 1; i >= 0; i--) {
-                    let index = Raid._indexes[i];
-                    WG.remove_hook(index);
-                }
-                Raid._indexes = [];
-            },
-            _cleanForOnceRun: function () {
-                Raid._cmdIndex = 0;
-                Raid._lastCmd = undefined;
-                Raid._enemyIds = undefined;
-                Raid._enemyCounter = 0;
-            },
-            _overOnceRun: function () {
-                if (Raid.didEndOnceRun) {
-                    Raid.didEndOnceRun(Raid._repeatCounter);
-                }
-
-                Raid._repeatCounter += 1;
-                if (Raid._repeatCounter < Raid._repeatTotal) {
-                    window.setTimeout(Raid._once_run, 2000);
-                } else {
-                    Raid._cleanRepeatRun();
-
-                    if (Raid.didEndRun) {
-                        Raid.didEndRun();
-                    }
-                }
-            },
-
-            _executeCmd: function () {
-                if (Raid._cmdIndex >= Raid.cmds.length) {
-                    WG.Send("cr;cr over");
-                    Raid._overOnceRun();
-                    return;
-                }
-
-                if (Role.isStatus("busy")) {
-                    Raid._delayExecuteCmd();
-                    return;
-                }
-
-                var cmd = Raid.cmds[Raid._cmdIndex];
-                if (Raid.willExecuteCmd) {
-                    let valid = Raid.willExecuteCmd(Raid._lastCmd, cmd);
-                    if (!valid) {
-                        Raid._delayExecuteCmd();
-                        return;
-                    }
-                    cmd = valid;
-                }
-
-                if (Raid._enemyCounter > 0) {
-                    Raid._killEnemy();
-                    Raid._delayExecuteCmd();
-                    return;
-                }
-
-                Raid._lastCmd = cmd;
-                // @开头，虚命令，不真正执行
-                if (cmd.indexOf("@") == -1) {
-                    console.log("执行命令：" + cmd);
-                    WG.Send(cmd);
-                }
-                Raid._cmdIndex += 1;
-                Raid._delayExecuteCmd();
-
-                if (Raid.didExecuteCmd) {
-                    Raid.didExecuteCmd(cmd);
-                }
-            },
-            _delayExecuteCmd: function () {
-                window.setTimeout(Raid._executeCmd, 2000);
-            },
-            _killEnemy: function () {
-                if (Raid._enemyIds == undefined) {
-                    return
-                }
-                for (var i = 0; i < Raid._enemyIds.length; i++) {
-                    let enemyId = Raid._enemyIds[i];
-                    WG.Send("kill " + enemyId);
-                }
-            },
-
-            _monitorEnemy: function () {
-                let index = WG.add_hook("items", function (data) {
-                    if (data.items == undefined) return;
-                    var enemyIds = [];
-                    for (var i = 0; i < data.items.length; i++) {
-                        let item = data.items[i];
-                        if (item.id == undefined || item.name == undefined) continue;
-                        if (Raid.enemyNames.indexOf(item.name) >= 0) {
-                            enemyIds.push(item.id);
-                        }
-                    }
-                    Raid._enemyIds = enemyIds;
-                    Raid._enemyCounter = enemyIds.length;
-                });
-                return index;
-            },
-            _monitorEnemyDie: function () {
-                let index = WG.add_hook("sc", function (data) {
-                    if (data.id == undefined || !Raid._enemyIds) return;
-                    if (WG.inArray(data.id, Raid._enemyIds) && data.hp == 0) {
-                        Raid._enemyCounter -= 1;
-                    }
-                });
-                return index;
-            },
-        };
-
-        var ToRaid = {
-            yihua: function () {
-                Raid.name = "移花宫";
-                Raid.cmds = [
-                    "jh fb 22 start1;cr huashan/yihua/shandao",
-                    "go south;go south;go south;go south;go south;go south;go south;go south;go south;go south;go south;go south;go south;go south",
-                    "go south;go south",
-                    "go south",
-                    "go southeast",
-                    "go northwest;go southwest",
-                    "look hua",
-                    "go southeast",
-                    "look bed",
-                    "go down",
-                    "fire;go west",
-                    "look xia;open xia",
-                ];
-                Raid.enemyNames = [
-                    "花月奴",
-                    "移花宫女弟子",
-                    "移花宫二宫主 涟星",
-                    "移花宫大宫主 邀月",
-                    "移花宫少宫主 花无缺"
-                ];
-                Raid.willStartOnceRun = function (number) {
-                    ToRaid.leftPush = 0;
-                    ToRaid.didFindSecretPath = false;
-                };
-                Raid.willStartRun = function () {
-                    let index1 = WG.add_hook("item", function (data) {
-                        if (data.desc == undefined) return;
-                        let patt = new RegExp("(?<=你数了下大概有)\\d");
-                        let count = patt.exec(data.desc);
-                        if (count) {
-                            ToRaid.leftPush = count;
-                        }
-                    });
-                    let index2 = WG.add_hook("exits", function (data) {
-                        if (data.items == undefined || data.items.down == undefined) return;
-                        if (data.items.down == "密道") {
-                            ToRaid.didFindSecretPath = true;
-                        }
-                    });
-                    ToRaid.indexes = [index1, index2];
-                };
-                Raid.didEndRun = function () {
-                    for (var i = ToRaid.indexes.length - 1; i >= 0; i--) {
-                        let index = ToRaid.indexes[i];
-                        WG.remove_hook(index);
-                    }
-                };
-                Raid.willExecuteCmd = function (lastCmd, cmd) {
-                    if (lastCmd == "look hua" && (ToRaid.leftPush == undefined || ToRaid.leftPush == 0)) {
-                        return null
-                    }
-                    if (lastCmd == "look bed" && !ToRaid.didFindSecretPath) {
-                        WG.Send("pushstart bed");
-                        for (var i = ToRaid.leftPush - 1; i >= 0; i--) {
-                            WG.Send("pushleft bed");
-                        }
-                        for (var j = 7; j >= 0; j--) {
-                            WG.Send("pushright bed");
-                        }
-                        return null
-                    }
-                    return cmd
-                };
-                Raid.repeatRun();
-            },
-            hardTaohua: function () {
-                Raid.name = "桃花岛-困难";
-                Raid.cmds = [
-                    "jh fb 18 start2;cr taohua/haitan 1 0",
-                    "go south",
-                    "@look 1",
-                    "@look 5",
-                    "go south;go south",
-                    "go east;go east",
-                    "go east;go north",
-                    "@wait"
-                ];
-                Raid.enemyNames = [
-                    "桃花岛四弟子 陆乘风",
-                    "桃花岛大弟子 曲灵风",
-                    "<hiy>东邪</hiy> 黄药师"
-                ];
-                Raid.willStartOnceRun = function (number) {
-                    ToRaid.mazeCoords = [
-                        [2, 2],
-                        [2, 2],
-                        [2, 2],
-                        [2, 2],
-                        [2, 2],
-                        [0, 0],
-                        [2, 2],
-                        [2, 2],
-                        [2, 2],
-                        [2, 2]
-                    ];
-                    ToRaid.foundFirst = false;
-                    ToRaid.goCenterCmd = undefined;
-                    ToRaid.paths = undefined;
-                };
-                Raid.willStartRun = function () {
-                    let index1 = WG.add_hook(["room", "exits"], function (data) {
-                        if (ToRaid.foundFirst) return;
-
-                        if (data.type == "room") {
-                            if (data.desc == undefined) return;
-                            let patt = new RegExp("四周栽了大概有一棵桃树");
-                            let result = patt.exec(data.desc);
-                            if (result) ToRaid.atFirst = true;
-                        } else if (data.type == "exits") {
-                            if (data.items == undefined) return;
-                            if (ToRaid.atFirst) {
-                                if (data.items.north && data.items.south) {
-                                    if (data.items.west) {
-                                        ToRaid.mazeCoords[1] = [1, 0];
-                                        ToRaid.goCenterCmd = "go west"
-                                    } else {
-                                        ToRaid.mazeCoords[1] = [-1, 0];
-                                        ToRaid.goCenterCmd = "go east"
-                                    }
-                                    ToRaid.foundFirst = true;
-                                } else if (data.items.west && data.items.east) {
-                                    if (data.items.north) {
-                                        ToRaid.mazeCoords[1] = [0, -1];
-                                        ToRaid.goCenterCmd = "go north"
-                                    } else {
-                                        ToRaid.mazeCoords[1] = [0, 1];
-                                        ToRaid.goCenterCmd = "go south"
-                                    }
-                                    ToRaid.foundFirst = true;
-                                }
-                            }
-                        }
-                    });
-                    let index2 = WG.add_hook("room", function (data) {
-                        if (ToRaid.paths) return;
-
-                        if (data.desc == undefined) return;
-                        let patt = new RegExp("(?<=能看到东南方向大概有).(?=棵桃树)");
-                        let count = patt.exec(data.desc);
-                        if (!count) return;
-                        switch (count.toString()) {
-                            case "二":
-                                ToRaid.mazeCoords[2] = [1, -1];
-                                break;
-                            case "四":
-                                ToRaid.mazeCoords[4] = [1, -1];
-                                break;
-                            case "六":
-                                ToRaid.mazeCoords[6] = [1, -1];
-                                break;
-                            case "八":
-                                ToRaid.mazeCoords[8] = [1, -1];
-                                break;
-                        }
-
-                        ToRaid.mazeCoords[9] = [-ToRaid.mazeCoords[1][0], -ToRaid.mazeCoords[1][1]];
-                        while (true) {
-                            if (ToRaid.mazeCoords[2][0] != 2) {
-                                ToRaid.mazeCoords[8] = [-ToRaid.mazeCoords[2][0], -ToRaid.mazeCoords[2][1]];
-                            }
-                            if (ToRaid.mazeCoords[8][0] != 2) {
-                                if (ToRaid.mazeCoords[8][0] == ToRaid.mazeCoords[1][0]) {
-                                    ToRaid.mazeCoords[6] = [ToRaid.mazeCoords[8][0], -ToRaid.mazeCoords[8][1]];
-                                } else {
-                                    ToRaid.mazeCoords[6] = [-ToRaid.mazeCoords[8][0], ToRaid.mazeCoords[8][1]];
-                                }
-                            }
-                            if (ToRaid.mazeCoords[6][0] != 2) {
-                                ToRaid.mazeCoords[4] = [-ToRaid.mazeCoords[6][0], -ToRaid.mazeCoords[6][1]];
-                            }
-                            if (ToRaid.mazeCoords[4][0] != 2) {
-                                if (ToRaid.mazeCoords[4][0] == ToRaid.mazeCoords[9][0]) {
-                                    ToRaid.mazeCoords[2] = [ToRaid.mazeCoords[4][0], -ToRaid.mazeCoords[4][1]];
-                                } else {
-                                    ToRaid.mazeCoords[2] = [-ToRaid.mazeCoords[4][0], ToRaid.mazeCoords[4][1]];
-                                }
-                            }
-                            if (ToRaid.mazeCoords[2][0] != 2 &&
-                                ToRaid.mazeCoords[4][0] != 2 &&
-                                ToRaid.mazeCoords[6][0] != 2 &&
-                                ToRaid.mazeCoords[8][0] != 2) {
-                                break;
-                            }
-                        }
-                        if (ToRaid.mazeCoords[8][0] == ToRaid.mazeCoords[4][0]) {
-                            ToRaid.mazeCoords[3] = [ToRaid.mazeCoords[8][0], 0];
-                        } else {
-                            ToRaid.mazeCoords[3] = [0, ToRaid.mazeCoords[8][1]];
-                        }
-                        ToRaid.mazeCoords[7] = [-ToRaid.mazeCoords[3][0], -ToRaid.mazeCoords[3][1]];
-
-                        let pathMap = [
-                            ["go southwest", "go west", "go northwest"],
-                            ["go south", "", "go north"],
-                            ["go southeast", "go east", "go northeast"]
-                        ];
-                        let backMap = {
-                            "": "",
-                            "go southwest": "go northeast",
-                            "go west": "go east",
-                            "go northwest": "go southeast",
-                            "go south": "go north",
-                            "go north": "go south",
-                            "go southeast": "go northwest",
-                            "go east": "go west",
-                            "go northeast": "go southwest"
-                        };
-                        var paths = "";
-                        for (var i = 2; i <= 9; i++) {
-                            let j = ToRaid.mazeCoords[i][0] + 1;
-                            let k = ToRaid.mazeCoords[i][1] + 1;
-                            let path = pathMap[j][k];
-                            if (i == 9) {
-                                paths += path + ";" + path;
-                            } else {
-                                paths += path + ";" + backMap[path] + ";";
-                            }
-                        }
-                        ToRaid.paths = paths;
-                    });
-                    ToRaid.indexes = [index1, index2];
-                };
-                Raid.didEndRun = function () {
-                    for (var i = ToRaid.indexes.length - 1; i >= 0; i--) {
-                        let index = ToRaid.indexes[i];
-                        WG.remove_hook(index);
-                    }
-                };
-                Raid.willExecuteCmd = function (lastCmd, cmd) {
-                    if (cmd == "@look 1") {
-                        if (ToRaid.foundFirst) {
-                            return ToRaid.goCenterCmd;
-                        } else {
-                            return null;
-                        }
-                    }
-                    if (cmd == "@look 5") {
-                        if (ToRaid.paths) {
-                            return ToRaid.paths;
-                        } else {
-                            return null;
-                        }
-                    }
-                    return cmd;
-                };
-                Raid.repeatRun();
-            },
-        };
     //全局变量
     var G = {
         id: undefined,
@@ -2802,8 +2457,9 @@
         $('head').append('<link href="https://s1.pstatp.com/cdn/expire-1-y/jquery-contextmenu/2.6.3/jquery.contextMenu.min.css" rel="stylesheet">');
         KEY.init();
         WG.init();
-        //加载副本脚本
-        Role.init();
+        unsafeWindow.WG = WG;
+        unsafeWindow.messageClear = messageClear;
+        unsafeWindow.messageAppend = messageAppend;
         WG.add_hook("items", function (data) {
             Helper.saveRoomstate(data);
 
@@ -2898,7 +2554,7 @@
                 G.skills = data.skills;
             } else if (data.type == 'dispfm') {
                 if (data.id) {
-                    if (data.distime) {}
+                    if (data.distime) { }
                     G.cds.set(data.id, true);
                     var _id = data.id;
                     setTimeout(function () {
@@ -3077,11 +2733,14 @@
                             callback: function (key, opt) {
                                 Helper.oneKeySD();
                             },
-                        }, "自动移花宫": {
-                            name: "自动移花宫",
+                        }, "自动副本菜单": {
+                            name: "自动副本菜单",
                             callback: function (key, opt) {
-                                WG.Send('stopstate');
-                                ToRaid.yihua();
+                                if (unsafeWindow.ToRaid) {
+                                    unsafeWindow.ToRaid.menu();
+                                } else {
+                                    messageAppend("插件未安装,请访问 https://greasyfork.org/zh-CN/scripts/375851-wsmud-raid 下载并安装");
+                                }
                             },
                         },
                     },
@@ -3133,8 +2792,8 @@
                         },
                     }
                 },
-                "自命令": {
-                    name: "自命令",
+                "自命令,及自定监控": {
+                    name: "自命令,及自定监控",
                     callback: function (key, opt) {
                         Helper.zml();
                     },
@@ -3295,7 +2954,6 @@
                         WG.updete_npc_id();
                     },
                 },
-               
                 "调试BOSS": {
                     name: "调试BOSS",
                     visible: false,
