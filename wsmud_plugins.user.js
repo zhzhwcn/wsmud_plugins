@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         wsmud_pluginss
 // @namespace    cqv1
-// @version      0.0.30.09
+// @version      0.0.31.26
 // @date         01/07/2018
-// @modified     23/10/2018
+// @modified     02/01/2019
 // @homepage     https://greasyfork.org/zh-CN/scripts/371372
 // @description  武神传说 MUD
 // @author       fjcqv(源程序) & zhzhwcn(提供websocket监听)& knva(做了一些微小的贡献) &Bob.cn(raid.js作者)
@@ -22,7 +22,7 @@
 
 (function () {
     'use strict';
-    var updateinfo = "增加:自定义状态监控功能,右键->自定义监控 开启,使用本功能需要一些基础知识,不知道的就别用了. \n支付宝搜索 9214712 领大额线下花呗红包";
+    var updateinfo = "增加:房间内ID查找函数,例如 $findPlayerByName(\"冬马\") \n 增加:延迟函数,例如 $wait 10000;perform sword.wu 延迟十秒后使用无招\n 增加:$to 指令 例如 $to 扬州城-醉仙楼 \n 增加:$eq 指令 $eq 0 为脱装备 $eq 1 为穿套装1 \n支付宝搜索 9214712 领大额线下花呗红包";
 
     Array.prototype.baoremove = function (dx) {
         if (isNaN(dx) || dx > this.length) {
@@ -34,6 +34,12 @@
     if (WebSocket) {
         console.log('插件可正常运行,Plugins can run normally');
 
+        function show_msg(msg) {
+            ws_on_message({
+                data: msg
+            });
+
+        }
         var _ws = WebSocket,
             ws, ws_on_message;
         unsafeWindow.WebSocket = function (uri) {
@@ -91,7 +97,9 @@
                 ws.onerror = fn;
             },
             send: function (text) {
-
+                if (G.cmd_echo) {
+                    show_msg('<hiy>' + text + '</hiy>');
+                }
                 ws.send(text);
             },
             close: function () {
@@ -113,7 +121,7 @@
     var blackpfm = [];
     var needfind = {
         "武当派-林间小径": ["go south"],
-        "峨眉派-走廊": ["go north", "go south;go south", "go north;go east;go east"],
+        "峨嵋派-走廊": ["go north", "go south;go south", "go north;go east;go east"],
         "丐帮-暗道": ["go east", "go east;go east", "go east"],
         "逍遥派-林间小道": ["go west;go north", "go south;go south", "go north;go west"],
         "少林派-竹林": ["go north"],
@@ -329,6 +337,7 @@
         "扬州城-打铁铺": "jh fam 0 start;go east;go east;go south",
         "扬州城-药铺": "jh fam 0 start;go east;go east;go north",
         "扬州城-衙门正厅": "jh fam 0 start;go west;go north;go north",
+        "扬州城-镖局正厅": "jh fam 0 start;go west;go west;go south;go south",
         "扬州城-矿山": "jh fam 0 start;go west;go west;go west;go west",
         "扬州城-喜宴": "jh fam 0 start;go north;go north;go east;go up",
         "扬州城-擂台": "jh fam 0 start;go west;go south",
@@ -391,18 +400,18 @@
         "华山派-长空栈道": "jh fam 3 start;go westup;go south;go southup;go southup;break bi;go enter;go westup",
         "华山派-落雁峰": "jh fam 3 start;go westup;go south;go southup;go southup;break bi;go enter;go westup;go westup",
         "华山派-华山绝顶": "jh fam 3 start;go westup;go south;go southup;go southup;break bi;go enter;go westup;go westup;jumpup",
-        "峨眉派-金顶": "jh fam 4 start",
-        "峨眉派-庙门": "jh fam 4 start;go west",
-        "峨眉派-广场": "jh fam 4 start;go west;go south",
-        "峨眉派-走廊": "jh fam 4 start;go west;go south;go west",
-        "峨眉派-休息室": "jh fam 4 start;go west;go south;go east;go south",
-        "峨眉派-厨房": "jh fam 4 start;go west;go south;go east;go east",
-        "峨眉派-练功房": "jh fam 4 start;go west;go south;go west;go west",
-        "峨眉派-小屋": "jh fam 4 start;go west;go south;go west;go north;go north",
-        "峨眉派-清修洞": "jh fam 4 start;go west;go south;go west;go south;go south",
-        "峨眉派-大殿": "jh fam 4 start;go west;go south;go south",
-        "峨眉派-睹光台": "jh fam 4 start;go northup",
-        "峨眉派-华藏庵": "jh fam 4 start;go northup;go east",
+        "峨嵋派-金顶": "jh fam 4 start",
+        "峨嵋派-庙门": "jh fam 4 start;go west",
+        "峨嵋派-广场": "jh fam 4 start;go west;go south",
+        "峨嵋派-走廊": "jh fam 4 start;go west;go south;go west",
+        "峨嵋派-休息室": "jh fam 4 start;go west;go south;go east;go south",
+        "峨嵋派-厨房": "jh fam 4 start;go west;go south;go east;go east",
+        "峨嵋派-练功房": "jh fam 4 start;go west;go south;go west;go west",
+        "峨嵋派-小屋": "jh fam 4 start;go west;go south;go west;go north;go north",
+        "峨嵋派-清修洞": "jh fam 4 start;go west;go south;go west;go south;go south",
+        "峨嵋派-大殿": "jh fam 4 start;go west;go south;go south",
+        "峨嵋派-睹光台": "jh fam 4 start;go northup",
+        "峨嵋派-华藏庵": "jh fam 4 start;go northup;go east",
         "逍遥派-青草坪": "jh fam 5 start",
         "逍遥派-林间小道": "jh fam 5 start;go east",
         "逍遥派-练功房": "jh fam 5 start;go east;go north",
@@ -444,7 +453,7 @@
     var zdy_item_store = '';
     //状态监控 type 类型 0 =其他人 1= 本人 send 命令数组
     //[{"name":"","type":"status","action":"remove","keyword":"busy","ishave":"0","send":""}]
-    var ztjk_item =[];
+    var ztjk_item = [];
     //快捷键功能
     var KEY = {
         keys: [],
@@ -664,6 +673,10 @@
                 ((event.keyCode >= 48 && event.keyCode <= 57) || (event.keyCode >= 96 && event.keyCode <= 105)))
                 return;
 
+            if ($('input').is(':focus') || $('textarea').is(':focus')) {
+
+                return;
+            }
             var kk = (event.ctrlKey || event.metaKey ? 1024 : 0) + (event.altKey ? 512 : 0) + event.keyCode;
             for (var k of KEY.keys) {
                 if (k.key == kk)
@@ -751,9 +764,9 @@
             place: "丐帮-树洞下",
             npc: "丐帮七袋弟子 左全"
         },
-        '峨眉': {
-            place: "峨眉派-大殿",
-            npc: "峨嵋派第四代弟子 静心"
+        '峨嵋': {
+            place: "峨嵋派-大殿",
+            npc: "峨眉派第四代弟子 静心"
         },
         '武馆': {
             place: "扬州城-扬州武馆",
@@ -788,11 +801,12 @@
 <div style = " width: calc(100% - 40px);" >
 <span class='zdy-item sm_button'>师门(Q)</span>
 <span class='zdy-item go_yamen_task'>追捕(W)</span>
-<span class='zdy-item kill_all'>击杀(E))</span>
+<span class='zdy-item kill_all'>击杀(E)</span>
 <span class='zdy-item get_all'>拾取(R)</span>
 <span class='zdy-item sell_all'>清包(T)</span>
 <span class='zdy-item zdwk'>挖矿(Y)</span>
  <span class = "zdy-item auto_perform" style = "float:right;" > 自动攻击 </span>
+                <span class="zdy-item cmd_echo" style="float:right;">代码</span>
 </div>
 `;
             $(".content-message").after(html);
@@ -827,7 +841,7 @@
             zml = GM_getValue(role + "_zml", zml);
             //自定义存储
             zdy_item_store = GM_getValue(role + "_zdy_item_store", zdy_item_store);
-            ztjk_item = GM_getValue(role+"_ztjk",ztjk_item);
+            ztjk_item = GM_getValue(role + "_ztjk", ztjk_item);
             if (auto_pfmswitch == '已开启') {
                 G.auto_preform = true;
             }
@@ -846,6 +860,7 @@
             $(".sell_all").on("click", WG.clean_all);
             $(".zdwk").on("click", WG.zdwk);
             $(".auto_perform").on("click", WG.auto_preform_switch);
+            $(".cmd_echo").on("click", WG.cmd_echo_button);
 
             setTimeout(() => {
                 role = role;
@@ -860,9 +875,13 @@
                     var rolep = role;
                     if (G.level) {
                         rolep = G.level + role;
+                        if (G.level.indexOf('武帝') >= 0) {
+                            $('.zdy-item zdwk').html("修炼(Y)");
+                        }
                     }
+
                     if (WebSocket) {
-                       
+
                         if (npcs['店小二'] == 0) {
                             logintext = `
 <hiy>欢迎${rolep},插件已加载！第一次使用,请在设置中,初始化ID,并且设置一下是否自动婚宴,自动传送boss
@@ -977,7 +996,6 @@
                 cmd = cmd instanceof Array ? cmd : cmd.split(';');
                 for (var c of cmd) {
                     $("span[WG='WG']").attr("cmd", c).click();
-
                 };
             }
         },
@@ -985,10 +1003,37 @@
             if (cmd) {
                 cmd = cmd instanceof Array ? cmd : cmd.split(';');
                 for (var c of cmd) {
-                    if (G.autoDevMed) {
-                        $("span[WG='WG']").attr("cmd", c).click();
-                        await WG.sleep(12000);
+                    $("span[WG='WG']").attr("cmd", c).click();
+                    await WG.sleep(12000);
+
+                };
+            }
+        },
+        SendCmd: async function (cmd) {
+            if (cmd) {
+                cmd = cmd instanceof Array ? cmd : cmd.split(';');
+                let idx = 0;
+                for (var c of cmd) {
+                    if (c.indexOf("$") >= 0) {
+                        if (c[0] == "$") {
+                            c = c.replace("$", "");
+                            let p0 = c.split(" ")[0];
+                            let p1 = c.split(" ")[1];
+
+                            eval("T." + p0 + "('" + p1 + "','" + cmd + "')");
+                            return;
+                        } else {
+                            var p_c = c.split(" ")[1];
+                            if (p_c[0] == "$") {
+                                p_c = p_c.replace("$", "");
+                                let patt = new RegExp(/\".*?\"/);
+                                let result = patt.exec(p_c)[0];
+                                eval("T." + p_c.split('(')[0] + "(" + result + ",'" + cmd + "')");
+                                return;
+                            }
+                        }
                     }
+                    $("span[WG='WG']").attr("cmd", c).click();
                 };
             }
         },
@@ -1202,7 +1247,7 @@
                 return;
             }
             messageAppend("查找任务中");
-            var task = $(".task-desc:last").text();
+            var task = $(".task-desc:eq(-2)").text();
             if (task.length == 0) {
                 KEY.do_command("tasks");
                 window.setTimeout(WG.check_yamen_task, 1000);
@@ -1341,6 +1386,15 @@
             messageAppend("<hio>包裹整理</hio>开始");
             WG.go("仓库");
             WG.Send("store;pack");
+        },
+        cmd_echo_button: function () {
+            if (G.cmd_echo) {
+                G.cmd_echo = false;
+                messageAppend("<hio>命令代码关闭</hio>");
+            } else {
+                G.cmd_echo = true;
+                messageAppend("<hio>命令代码显示</hio>");
+            }
         },
         zdwk: function () {
             if (G.level) {
@@ -1503,7 +1557,7 @@
         calc: function () {
             messageClear();
             var html = `
-<div>
+<div class='zdy_dialog'>
 <div style="width:50%;float:left">
 <span>潜能计算器</span>
 <input type="number" id="c" placeholder="初始等级" style="width:50%" class="mui-input-speech"><br/>
@@ -1539,14 +1593,14 @@
         },
         setting: function () {
             messageClear();
-            var a = `<div style='text-align:right;width:280px'>
+            var a = `<div class='zdy_dialog' style='text-align:right;width:280px'>
             有空的话请点个star,您的支持是我最大的动力<a target="_blank"  href="https://github.com/knva/wsmud_plugins">https://github.com/knva/wsmud_plugins</a>
 <span>
 <label for="family">门派选择：</label><select style='width:80px' id="family">
 <option value="武当">武当</option>
 <option value="华山">华山</option>
 <option value="少林">少林</option>
-<option value="峨眉">峨眉</option>
+<option value="峨嵋">峨嵋</option>
 <option value="逍遥">逍遥</option>
 <option value="丐帮">丐帮</option>
 <option value="武馆">武馆</option>
@@ -1684,7 +1738,7 @@
                 // }
                 var listener = this.hooks[i];
                 if (listener.types == data.type || (listener.types instanceof Array && $
-                    .inArray(data.type, listener.types) >= 0)) {
+                        .inArray(data.type, listener.types) >= 0)) {
                     listener.fn(data);
                 }
             }
@@ -1701,6 +1755,9 @@
                     type: 'text',
                     msg: msg.data
                 };
+            }
+            if (G.cmd_echo) {
+                console.log(data);
             }
             WG.run_hook(data.type, data);
         },
@@ -1978,7 +2035,7 @@
             if (id == null) return;
             Helper.fight_listener = WG.add_hook(["sc", "combat"], function (data) {
                 if (data.type == "combat" && data.end) {
-                    Helper.recover(1, 1, 0, function () { });
+                    Helper.recover(1, 1, 0, function () {});
                 } else if (data.type == "sc" && data.id == id) {
                     let item = G.items.get(id);
                     if (item.hp >= item.max_hp) {
@@ -1986,6 +2043,10 @@
                             WG.Send("stopstate;fight " + id);
                         });
                     }
+                } else if (data.msg && data.msg.indexOf("你目前气血充沛") >= 0) {
+                    Helper.recover(1, 1, 0, function () {
+                        WG.Send("stopstate;fight " + id);
+                    });
                 }
 
             });
@@ -2080,9 +2141,10 @@
 
         auto_Development_medicine: function () {
             messageClear();
-            var a = `<div style='text-align:right;width:280px'>
+            var a = `<div class='zdy_dialog' style='text-align:right;width:280px'>
             有空的话请点个star,您的支持是我最大的动力
             <a target="_blank"  href="https://github.com/knva/wsmud_plugins">https://github.com/knva/wsmud_plugins</a>
+            药方链接:<a target="_blank"  href="https://suqing.fun/wsmud/yaofang/">https://suqing.fun/wsmud/yaofang/</a>
 <span>
 <label for = "medicine_level" > 级别选择： </label><select style='width:80px' id="medicine_level">
 <option value="1">绿色</option>
@@ -2090,16 +2152,9 @@
 <option value="3">黄色</option>
 <option value="4">紫色</option>
 <option value="5">橙色</option>
-</select>
-</span>
-<span>
-<label for="medicint_info"> 输入使用的顺序(使用半角逗号分隔):</label>
-</span>
-<span>
-    <textarea class = "settingbox hide"
-    style = "display: inline-block;"
-    id = 'medicint_info'>石楠叶,金银花,金银花,金银花,当归</textarea>
-</span>
+</select></span>
+<span><label for="medicint_info"> 输入使用的顺序(使用半角逗号分隔):</label></span>
+<span><textarea class = "settingbox hide" style = "display: inline-block;" id = 'medicint_info'>石楠叶,金银花,金银花,金银花,当归</textarea></span>
 <div class = "item-commands" > <span class = "startDev" > 开始 </span><span class = "stopDev" > 停止 </span> </div>
 
 </div>`
@@ -2107,14 +2162,12 @@
 
             $('.startDev').on('click', function () {
                 if (WG.at('住房-炼药房')) {
-                    G.autoDevMed = true;
                     Helper.auto_start_dev_med($('#medicint_info').val().replace(" ", ""), $('#medicine_level').val());
                 } else {
                     alert("请先前往炼药房");
                 }
             });
             $('.stopDev').on('click', function () {
-                G.autoDevMed = false;
                 WG.Send("stopstate");
             });
         },
@@ -2174,9 +2227,11 @@
         zml: function () {
             zml = GM_getValue(role + "_zml", zml);
             messageClear();
-            var a = `<div style='text-align:right;width:280px'>
+            var a = `<div class='zdy_dialog' style='text-align:right;width:280px'>
             <div class = "item-commands" > <span class = "editzml" > 编辑自命令 </span> </div>
-            <div class = "item-commands" > <span class = "editztjk" > 编辑自定义监控 </span> </div>
+            <div class = "item-commands" > <span class = "editztjk" > 编辑自定义监控 </span> 
+            <span class = "startzdjk" > 注入所有监控 </span> 
+            <span class = "stopzdjk" > 暂停所有监控 </span> </div>
             <div class = "item-commands"  id = "zml_show"></div>
 
             </div>`;
@@ -2188,7 +2243,7 @@
             })
             zml.forEach(function (v, k) {
                 $(".addrun" + k).on("click", function () {
-                    WG.Send(v.zmlRun);
+                    WG.SendCmd(v.zmlRun);
                     messageAppend("运行" + v.name, 2);
                 });
             });
@@ -2199,17 +2254,29 @@
             $(".editztjk").on("click", function () {
                 Helper.ztjk_edit();
             });
+            $(".startzdjk").on("click", function () {
+                Helper.ztjk_func();
+            });
+            $(".stopzdjk").on("click", function () {
+                if (Helper.ztjk_hook) {
+                    WG.remove_hook(Helper.ztjk_hook);
+                    Helper.ztjk_hook = undefined;
+                    messageAppend("已取消注入", 2);
+                    return;
+                }
+                messageAppend("未注入", 2);
+            });
 
         },
         zml_edit: function () {
             zml = GM_getValue(role + "_zml", zml);
             messageClear();
-            var edithtml = `<div style='text-align:right;width:280px'>
+            var edithtml = `<div class='zdy_dialog' style='text-align:right;width:280px'>
 <span><label for="zml_name"> 输入自定义命令名称:</label></span>
 <span><input id ="zml_name" style='width:80px' type="text"  name="zml_name" value=""></span>
 <span><label for="zml_info"> 输入自定义命令(用半角分号(;)分隔):</label></span>
 <span> <textarea class = "settingbox hide"style = "display: inline-block;"id = 'zml_info'></textarea></span>
-<div class = "item-commands" > <span class = "editadd" > 添加 </span> </div>
+<div class = "item-commands"> <span class = "editadd" > 保存 </span>  <span class = "editdel"> 删除 </span> </div>
 <div class = "item-commands"  id = "zml_show"></div>
 </div> `
             messageAppend(edithtml);
@@ -2220,37 +2287,56 @@
                     "name": zmlname,
                     "zmlRun": zmltext
                 };
-                zml.push(zmljson);
+                let _flag = true;
+                zml.forEach(function (v, k) {
+                    if (v.name == zmlname) {
+                        zml[k] = zmljson;
+                        _flag = false;
+                    }
+                });
+                if (_flag) {
+                    zml.push(zmljson);
+                }
                 GM_setValue(role + "_zml", zml);
-                messageAppend("添加成功", 2);
+                messageAppend("保存成功", 2);
+            });
+            $(".editdel").on('click', function () {
+                let zmlname = $("#zml_name").val();
+                zml.forEach(function (v, k) {
+                    if (v.name == zmlname) {
+                        zml.baoremove(k);
+                        GM_setValue(role + "_zml", zml);
+                        Helper.zml_edit();
+                        messageAppend("删除成功", 2);
+                    }
+                });
 
             });
 
             zml.forEach(function (v, k) {
-                var btn = "<span class='addrun" + k + "'>删除" + v.name + "</span>";
+                var btn = "<span class='addrun" + k + "'>编辑" + v.name + "</span>";
                 $('#zml_show').append(btn);
 
             })
             zml.forEach(function (v, k) {
                 $(".addrun" + k).on("click", function () {
-                    zml.baoremove(k);
-                    GM_setValue(role + "_zml", zml);
-                    Helper.zml_edit();
-                    messageAppend("删除成功", 2);
+
+                    $("#zml_name").val(v.name);
+                    $("#zml_info").val(v.zmlRun);
                 });
             });
         },
         ztjk_edit: function () {
 
-     //[{"name":"","type":"state","action":"remove","keyword":"busy","ishave":"0","send":""}]
+            //[{"name":"","type":"state","action":"remove","keyword":"busy","ishave":"0","send":""}]
             ztjk_item = GM_getValue(role + "_ztjk", ztjk_item);
             messageClear();
-            var edithtml = `<div style='text-align:right;width:280px'>
+            var edithtml = `<div class='zdy_dialog' style='text-align:right;width:280px'>
             <span><label> 本功能支持status(状态) 监控 以及 text(文本) 监控,文本监控可以不用输入action</label></span>
 <span><label for="ztjk_name"> 名称:</label></span><input id ="ztjk_name" style='width:80px' type="text"  name="ztjk_name" value="">
 <span><label for="ztjk_type"> 类型(type):</label></span><input id ="ztjk_type" style='width:80px' type="text"  name="ztjk_type" value="status">
 <span><label for="ztjk_action"> 动作(action):</label></span><input id ="ztjk_action" style='width:80px' type="text"  name="ztjk_action" value="">
-<span><label for="ztjk_keyword"> 关键字(sid):</label></span><input id ="ztjk_keyword" style='width:80px' type="text"  name="ztjk_keyword" value="">
+<span><label for="ztjk_keyword"> 关键字(sid or name or text):</label></span><input id ="ztjk_keyword" style='width:80px' type="text"  name="ztjk_keyword" value="">
 <label for = "ztjk_ishave" > 触发对象: </label><select style = 'width:80px' id = "ztjk_ishave" >
     <option value = "0" > 其他人 </option>
     <option value = "1" > 本人 </option>
@@ -2258,65 +2344,102 @@
 
 <span><label for="ztjk_send"> 输入自定义命令(用半角分号(;)分隔):</label></span>
  <textarea class = "settingbox hide"style = "display: inline-block;"id = 'ztjk_send'></textarea>
-<div class = "item-commands" > <span class = "ztjk_editadd" > 添加 </span> </div>
+<div class = "item-commands" > <span class = "ztjk_editadd" > 保存 </span>  <span class = "ztjk_editdel" > 删除 </span></div>
 <div class = "item-commands"  id = "ztjk_show"></div>
 </div> `
             messageAppend(edithtml);
-            $('.ztjk_editadd').on("click",function(){
-                var ztjk = {name:$('#ztjk_name').val(),
+            $('.ztjk_editadd').on("click", function () {
+                var ztjk = {
+                    name: $('#ztjk_name').val(),
                     type: $('#ztjk_type').val(),
                     action: $('#ztjk_action').val(),
                     keyword: $('#ztjk_keyword').val(),
                     ishave: $('#ztjk_ishave').val(),
                     send: $('#ztjk_send').val()
-                    };
+                };
+                let _flag = true;
+                ztjk_item.forEach(function (v, k) {
+                    if (v.name == $('#ztjk_name').val()) {
+                        ztjk_item[k] = ztjk;
+                        _flag = false;
+                    }
+                });
+                if (_flag) {
                     ztjk_item.push(ztjk);
-                GM_setValue(role+"_ztjk", ztjk_item);
+                }
+                GM_setValue(role + "_ztjk", ztjk_item);
                 Helper.ztjk_func();
             });
+            $(".ztjk_editdel").on('click', function () {
+                let name = $('#ztjk_name').val();
+                ztjk_item.forEach(function (v, k) {
+                    if (v.name == name) {
+                        ztjk_item.baoremove(k);
+                        GM_setValue(role + "_ztjk", ztjk_item);
+                        Helper.ztjk_edit();
+                        messageAppend("删除成功", 2);
+                        Helper.ztjk_func();
+                    }
+                });
+            })
             ztjk_item.forEach(function (v, k) {
-                var btn = "<span class='addrun" + k + "'>删除" + v.name + "</span>";
+                var btn = "<span class='addrun" + k + "'>编辑" + v.name + "</span>";
                 $('#ztjk_show').append(btn);
 
             });
             ztjk_item.forEach(function (v, k) {
                 $(".addrun" + k).on("click", function () {
-                    ztjk_item.baoremove(k);
-                    GM_setValue(role + "_ztjk", ztjk_item);
-                    Helper.ztjk_edit();
-                    messageAppend("删除成功", 2);
-                Helper.ztjk_func();
+                    $('#ztjk_name').val(v.name);
+                    $('#ztjk_type').val(v.type);
+                    $('#ztjk_action').val(v.action);
+                    $('#ztjk_keyword').val(v.keyword);
+                    $('#ztjk_ishave').val(v.ishave);
+                    $('#ztjk_send').val(v.send);
                 });
             });
 
         },
-        ztjk_hook:undefined,
-        ztjk_func :function(){
+        ztjk_hook: undefined,
+        ztjk_func: function () {
             if (Helper.ztjk_hook) {
                 WG.remove_hook(Helper.ztjk_hook);
             }
             Helper.ztjk_hook = undefined;
             ztjk_item = GM_getValue(role + "_ztjk", ztjk_item);
-            Helper.ztjk_hook = WG.add_hook(["status","text"], function (data) {
-                    ztjk_item.forEach(function(v,k){
-                        if(data.type == "status"){
-                            if (v.action == data.action && v.keyword == data.sid) {
-                                if (v.ishave == "0" && data.id != G.id){
-                                    messageAppend("已触发"+v.name,1);
-                                    WG.Send(v.send);
-                                } else if (v.ishave == "1" && data.id==G.id){
+            Helper.ztjk_hook = WG.add_hook(["status", "text"], function (data) {
+                ztjk_item.forEach(function (v, k) {
+                    if (data.type == "status") {
+                        if (!data.name) {
+                            if (v.action == data.action && (data.sid.indexOf(v.keyword) >= 0)) {
+                                if (v.ishave == "0" && data.id != G.id) {
                                     messageAppend("已触发" + v.name, 1);
-                                    WG.Send(v.send);
+                                    WG.SendCmd(v.send);
+                                } else if (v.ishave == "1" && data.id == G.id) {
+                                    messageAppend("已触发" + v.name, 1);
+                                    WG.SendCmd(v.send);
                                 }
                             }
-                        }else if (data.type =="text"){
-                            if(data.msg.indexOf(v.keyword)>=0){
-                                WG.Send(v.send);
+                        } else {
+                            if (v.action == data.action && (data.sid.indexOf(v.keyword) >= 0 || data.name.indexOf(v.keyword) >= 0)) {
+                                if (v.ishave == "0" && data.id != G.id) {
+                                    messageAppend("已触发" + v.name, 1);
+                                    WG.SendCmd(v.send);
+                                } else if (v.ishave == "1" && data.id == G.id) {
+                                    messageAppend("已触发" + v.name, 1);
+                                    WG.SendCmd(v.send);
+                                }
                             }
                         }
-                    });
-
+                    } else if (data.type == "text") {
+                        if (v.type == "text") {
+                            if (data.msg.indexOf(v.keyword) >= 0) {
+                                WG.SendCmd(v.send);
+                            }
+                        }
+                    }
                 });
+
+            });
             messageAppend("已注入自动监控");
         },
         daily_hook: undefined,
@@ -2432,8 +2555,86 @@
             KEY.do_command("tasks");
         },
 
+
     };
-    //副本部分 author  bob.cn
+    //助手函数
+    var T = {
+        //private 
+        recmd: function (cmds) {
+            if (cmds) {
+                cmds = cmds instanceof Array ? cmds : cmds.split(',');
+                cmds.baoremove(0);
+                cmds = cmds.join(";");
+                return cmds;
+            } else {
+                return "";
+            }
+
+        },
+
+        //public
+        findPlayerByName: function (n, cmds) {
+            let p = cmds[0].split(" ")[0];
+            cmds = T.recmd(cmds);
+            for (let i = 0; i < roomData.length; i++) {
+                if (roomData[i].name && roomData[i].name.indexOf(n) >= 0) {
+                    WG.Send(p + " " + roomData[i].id);
+                }
+            }
+
+            WG.SendCmd(cmds);
+        },
+        wait: async function (n, cmds) {
+            cmds = T.recmd(cmds);
+            console.log("延时:" + n + "ms,延时触发:" + cmds);
+            await WG.sleep(parseInt(n));
+            WG.SendCmd(cmds);
+        },
+        killall: async function (n = null, cmds) {
+            cmds = T.recmd(cmds);
+            console.log("叫杀");
+            WG.kill_all();
+            await WG.sleep(100);
+            WG.SendCmd(cmds);
+        },
+        getall: async function (n = null, cmds) {
+            cmds = T.recmd(cmds);
+            console.log("拾取");
+            WG.get_all();
+            await WG.sleep(100);
+            WG.SendCmd(cmds);
+        },
+        cleanall: async function (n = null, cmds) {
+            cmds = T.recmd(cmds);
+            console.log("清包");
+            WG.clean_all();
+            await WG.sleep(100);
+            WG.SendCmd(cmds);
+        },
+        to: async function (n, cmds) {
+            cmds = T.recmd(cmds);
+            WG.go(n);
+            await WG.sleep(100);
+            WG.SendCmd(cmds);
+        },
+        eq: async function (n, cmds) {
+            cmds = T.recmd(cmds);
+            if (n == "0") {
+                Helper.uneqall();
+            } else {
+                Helper.eqhelper(n);
+            }
+            await WG.sleep(100);
+            WG.SendCmd(cmds);
+        },
+        zdwk: async function (n, cmds) {
+            cmds = T.recmd(cmds);
+            WG.zdwk();
+            await WG.sleep(100);
+            WG.SendCmd(cmds);
+        }
+
+    };
 
     //全局变量
     var G = {
@@ -2451,7 +2652,6 @@
         auto_preform: false,
         can_auto: false,
         level: undefined,
-        autoDevMed: false,
     };
     $(document).ready(function () {
         $('head').append('<link href="https://s1.pstatp.com/cdn/expire-1-y/jquery-contextmenu/2.6.3/jquery.contextMenu.min.css" rel="stylesheet">');
@@ -2554,7 +2754,7 @@
                 G.skills = data.skills;
             } else if (data.type == 'dispfm') {
                 if (data.id) {
-                    if (data.distime) { }
+                    if (data.distime) {}
                     G.cds.set(data.id, true);
                     var _id = data.id;
                     setTimeout(function () {
@@ -2723,17 +2923,20 @@
                             callback: function (key, opt) {
                                 Helper.auto_Development_medicine();
                             },
-                        }, "一键日常": {
+                        },
+                        "一键日常": {
                             name: "一键日常",
                             callback: function (key, opt) {
                                 Helper.oneKeyDaily();
                             },
-                        }, "一键扫荡": {
+                        },
+                        "一键扫荡": {
                             name: "一键扫荡",
                             callback: function (key, opt) {
                                 Helper.oneKeySD();
                             },
-                        }, "自动副本菜单": {
+                        },
+                        "自动副本菜单": {
                             name: "自动副本菜单",
                             callback: function (key, opt) {
                                 if (unsafeWindow.ToRaid) {
@@ -2819,6 +3022,12 @@
                                 WG.go("扬州城-衙门正厅");
                             },
                         },
+                        "mp12": {
+                            name: "镖局",
+                            callback: function (key, opt) {
+                                WG.go("扬州城-镖局正厅");
+                            },
+                        },
                         "mp1": {
                             name: "当铺",
                             callback: function (key, opt) {
@@ -2901,13 +3110,13 @@
                             },
                         },
                         "mp3": {
-                            name: "峨眉",
+                            name: "峨嵋",
                             callback: function (key, opt) {
                                 let myDate = new Date();
                                 if (myDate.getHours() >= 17) {
-                                    WG.go("峨眉派-清修洞");
+                                    WG.go("峨嵋派-清修洞");
                                 } else {
-                                    WG.go("峨眉派-金顶")
+                                    WG.go("峨嵋派-金顶")
                                 }
                             },
                         },
@@ -2958,9 +3167,7 @@
                     name: "调试BOSS",
                     visible: false,
                     callback: function (key, opt) {
-                        Helper.kksBoss({
-                            "content": "听说南陇侯出现在逍遥派-林间小道一带。"
-                        });
+                        WG.SendCmd('test $findPlayerByName("冬马")');
                     },
                 },
                 "设置": {
