@@ -1151,6 +1151,16 @@
             var w = $(".room-name").html();
             return w.indexOf(p) == -1 ? false : true;
         },
+
+        getIdByName: function (n) {
+            for (let i = 0; i < roomData.length; i++) {
+                if (roomData[i].name && roomData[i].name.indexOf(n) >= 0) {
+                    return roomData[i].id;
+                }
+            }
+            return null;
+        },
+
         smhook: undefined,
         sm: function () {
             if (!WG.smhook) {
@@ -1178,33 +1188,34 @@
                 case 1:
                     //接受任务
                     var lists = $(".room_items .room-item");
-                    var id = null;
+                    var id = WG.getIdByName(sm_array[family].npc);
 
-                    for (var npc of lists) {
-                        if (npc.lastElementChild.innerText.indexOf("[") >= 0) {
-                            if (npc.lastElementChild.lastElementChild.lastElementChild.lastElementChild == null) {
-                                if (npc.lastElementChild.firstChild.nodeType == 3 &&
-                                    npc.lastElementChild.firstChild.nextSibling.tagName == "SPAN") {
+                    // for (var npc of lists) {
+                    //     if (npc.lastElementChild.innerText.indexOf("[") >= 0) {
+                    //         if (npc.lastElementChild.lastElementChild.lastElementChild.lastElementChild == null) {
+                    //             if (npc.lastElementChild.firstChild.nodeType == 3 &&
+                    //                 npc.lastElementChild.firstChild.nextSibling.tagName == "SPAN") {
 
-                                    if (npc.lastElementChild.innerText.split('[')[0] == sm_array[family].npc)
-                                        id = $(npc).attr("itemid");
-                                }
-                            }
-                        } else {
-                            if (npc.lastElementChild.lastElementChild == null) {
-                                if (npc.lastElementChild.innerText == sm_array[family].npc) {
-                                    id = $(npc).attr("itemid");
-                                }
-                            }
-                        }
-                    }
+                    //                 if (npc.lastElementChild.innerText.split('[')[0] == sm_array[family].npc)
+                    //                     id = $(npc).attr("itemid");
+                    //             }
+                    //         }
+                    //     } else {
+                    //         if (npc.lastElementChild.lastElementChild == null) {
+                    //             if (npc.lastElementChild.innerText == sm_array[family].npc) {
+                    //                 id = $(npc).attr("itemid");
+                    //             }
+                    //         }
+                    //     }
+                    // }
                     console.log(id);
                     if (id != undefined) {
                         WG.Send("task sm " + id);
                         WG.Send("task sm " + id);
                         WG.sm_state = 2;
                     } else {
-                        WG.updete_npc_id();
+                        WG.sm_state = 0;
+                        //WG.updete_npc_id();
                     }
                     setTimeout(WG.sm, 300);
                     break;
@@ -1714,13 +1725,13 @@
             this.fbnum += 1;
             messageAppend("第" + this.fbnum + "次");
             WG.Send("cr yz/lw/shangu;cr over");
-            if (this.needGrove == this.fbnum) {
+            if (this.needGrove <= this.fbnum) {
                 WG.Send("taskover signin");
                 messageAppend("<hiy>" + this.fbnum + "次副本小树林秒进秒退已完成</hiy>");
                 WG.remove_hook(Helper.daily_hook);
                 Helper.daily_hook = undefined;
                 this.timer_close();
-                WG.zdwk();
+                //WG.zdwk();
                 this.needGrove = 0;
                 this.fbnum = 0;
             }
@@ -2918,6 +2929,7 @@
         daily_hook: undefined,
         oneKeyDaily: async function () {
             messageAppend("本脚本会自动执行师门及自动进退小树林,请确保精力足够再执行", 1);
+            var fbnums = 0;
             Helper.daily_hook = WG.add_hook("dialog", async function (data) {
                 if (data.dialog == "tasks") {
                     if (data.items) {
@@ -2936,56 +2948,75 @@
                             let n = str1[0].match("：([^%]+)/20")[1];
                             let n1 = str1[1].match("：([^%]+)/20")[1];
                             n = 20 - parseInt(n);
-                            n1 = 20 - parseInt(n1);
-                            messageAppend("还需要" + n + "次师门任务," + n1 + "次副本,才可签到");
+                            fbnums = 20 - parseInt(n1);
+                            messageAppend("还需要" + n + "次师门任务," + fbnums + "次副本,才可签到");
                             if (n != 0) {
-                                $(".sm_button").click();
-                            }
-                            await WG.sleep(2000);
-                            while ($(".sm_button").text().indexOf("停止") >= 0) {
-                                await WG.sleep(2000);
+                                //$(".sm_button").click();
+                                WG.sm_state = 0;
+                                setTimeout(WG.sm, 200);
+                            } else {
+                                WG.sm_state = -1;
                             }
 
-                            WG.grove_auto(n1);
-
-                            // WG.remove_hook(Helper.daily_hook);
-                            // Helper.daily_hook = undefined;
+                            //WG.remove_hook(Helper.daily_hook);
+                            //Helper.daily_hook = undefined;
                         }
 
                     }
                 }
             });
             WG.Send("stopstate");
-            var sxplace = sm_array[family].sxplace;
-            var sx = sm_array[family].sx;
-            if (sxplace.indexOf("-") == 0) {
-                WG.Send(sxplace.replace('-', ''));
-            } else {
-                WG.go(sxplace);
+            WG.sm_state = 0;
+
+            KEY.do_command("tasks");
+            KEY.do_command("tasks");
+
+            await WG.sleep(2000);
+            while (WG.sm_state >= 0) {
+                await WG.sleep(2000);
             }
-            await WG.sleep(1000);
-            WG.SendCmd("ask2 $findPlayerByName(\"" + sx + "\")");
-            await WG.sleep(1000);
-            KEY.do_command("tasks");
-            KEY.do_command("tasks");
+
+            WG.grove_auto(fbnums);
+
+            // var sxplace = sm_array[family].sxplace;
+            // var sx = sm_array[family].sx;
+            // if (sxplace.indexOf("-") == 0) {
+            //     WG.Send(sxplace.replace('-', ''));
+            // } else {
+            //     WG.go(sxplace);
+            // }
+            // await WG.sleep(1000);
+            // WG.SendCmd("ask2 $findPlayerByName(\"" + sx + "\")");
+            // await WG.sleep(1000);
+
         },
+
         sd_hook: undefined,
         oneKeySD: function () {
             var n = 0;
             messageAppend("本脚本自动执行购买扫荡符,进行追捕扫荡,请确保元宝足够\n注意! 超过上限会自动放弃", 1);
             Helper.sd_hook = WG.add_hook(["dialog", "text"], async function (data) {
+                var id = 0;
+                var loop = 2;
                 if (data.type == 'text' && data.msg) {
+                    id = WG.getIdByName("程药发");
                     if (data.msg.indexOf("无法快速完") >= 0) {
-                        WG.SendCmd("ask1 $pname(\"程药发\")");
+                        WG.Send("ask1 " + id);
                         await WG.sleep(200);
-                        WG.SendCmd("ask2 $pname(\"程药发\")");
+                        WG.Send("ask2 " + id);
                         await WG.sleep(200);
-                        WG.SendCmd("ask3 $pname(\"程药发\")");
-                        messageAppend("追捕已完成", 1);
-                        await WG.sleep(5000);
-                        WG.zdwk();
-                        WG.remove_hook(Helper.sd_hook);
-                        Helper.sd_hook = undefined;
+                        while (loop) {
+                            loop--;
+                            console.log("ask3 " + id);
+                            WG.Send("ask3 " + id);
+                            await WG.sleep(1000);
+                        }
+
+                        //messageAppend("追捕已完成", 1);                       
+                        //WG.Send("ask3 " + id);
+                        //WG.zdwk();
+                        //WG.remove_hook(Helper.sd_hook);
+                        //Helper.sd_hook = undefined;
                     }
                     //<hig>你的追捕任务完成了，目前完成20/20个，已连续完成40个。</hig>
                     if (data.msg.indexOf("追捕任务完成了") >= 0) {
@@ -3000,11 +3031,18 @@
                         }
                     }
                     if (data.msg.indexOf("你的扫荡符不够。") >= 0) {
-                        messageAppend("还需要" + n + "次扫荡,自动购入" + n + "张扫荡符");
+                        id = WG.getIdByName("程药发");
 
+                        messageAppend("还需要" + n + "次扫荡,自动购入" + n + "张扫荡符");
                         WG.Send("shop 0 " + n);
-                        await WG.sleep(2000);
-                        WG.SendCmd("ask3 $pname(\"程药发\")");
+                        await WG.sleep(1000);
+                        while (loop) {
+                            loop--;
+                            console.log("ask3 " + id);
+                            WG.Send("ask3 " + id);
+                            await WG.sleep(1000);
+                        }
+
                     }
                 }
                 if (data.dialog == "tasks") {
@@ -3018,13 +3056,16 @@
                         n = 20 - parseInt(n);
                         if (n == 0) {
                             messageAppend("追捕已完成", 1);
-                            WG.zdwk();
+                            //WG.zdwk();
                             WG.remove_hook(Helper.sd_hook);
                             Helper.sd_hook = undefined;
                             return;
                         } else {
-                            WG.go("扬州城-衙门正厅");
-                            await WG.sleep(2000);
+                            do {
+                                WG.go("扬州城-衙门正厅");
+                                await WG.sleep(1000);
+                            }
+                            while (!WG.getIdByName("程药发"))
                             WG.SendCmd("ask3 $pname(\"程药发\")");
                         }
 
